@@ -109,100 +109,115 @@ jobs:
           echo "=== Disk space ==="
           df -h .
 
-      - name: Generate defconfig
+      - name: Build kernel
         working-directory: common
+        id: build
         run: |
-          mkdir -p out
-          make O=out \
-            ARCH=arm64 SUBARCH=arm64 \
-            LLVM=1 LLVM_IAS=1 \
-            CC=clang LD=ld.lld \
-            -j$(nproc --all) \
-            gki_defconfig 2>&1
-          echo "=== defconfig complete ==="
+          LOG="$GITHUB_WORKSPACE/build-output.log"
+          {
+            echo "=== Defconfig ==="
+            make O=out \
+              ARCH=arm64 SUBARCH=arm64 \
+              LLVM=1 LLVM_IAS=1 \
+              CC=clang LD=ld.lld \
+              -j$(nproc --all) \
+              gki_defconfig 2>&1
 
-      - name: Apply vendor config
-        working-directory: common
-        run: |
-          scripts/kconfig/merge_config.sh -m -O out \
-            out/.config \
-            "$GITHUB_WORKSPACE/vendor_exynosnext.config" 2>&1
-          make O=out \
-            ARCH=arm64 SUBARCH=arm64 \
-            LLVM=1 LLVM_IAS=1 \
-            CC=clang LD=ld.lld \
-            -j$(nproc --all) \
-            olddefconfig 2>&1
-          echo "=== vendor config applied ==="
-          grep -c "=y" out/.config || true
-          grep -c "=m" out/.config || true
+            echo ""
+            echo "=== .config exists? ==="
+            ls -la out/.config 2>&1 || echo "ERROR: .config not created"
 
-      - name: Build kernel image
-        working-directory: common
-        run: |
-          make O=out \
-            ARCH=arm64 SUBARCH=arm64 \
-            LLVM=1 LLVM_IAS=1 \
-            CC=clang LD=ld.lld \
-            AR=llvm-ar NM=llvm-nm \
-            OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip \
-            -j$(nproc --all) \
-            Image 2>&1
+            echo ""
+            echo "=== Apply vendor config ==="
+            if [ -f "$GITHUB_WORKSPACE/vendor_exynosnext.config" ]; then
+              scripts/kconfig/merge_config.sh -m -O out \
+                out/.config \
+                "$GITHUB_WORKSPACE/vendor_exynosnext.config" 2>&1 || echo "WARN: merge_config returned non-zero"
+              make O=out \
+                ARCH=arm64 SUBARCH=arm64 \
+                LLVM=1 LLVM_IAS=1 \
+                CC=clang LD=ld.lld \
+                olddefconfig 2>&1
+              echo "=== Config stats ==="
+              echo "y options: $(grep -c '=y' out/.config 2>/dev/null || echo 0)"
+              echo "m options: $(grep -c '=m' out/.config 2>/dev/null || echo 0)"
+            else
+              echo "WARN: No vendor config found"
+            fi
 
-      - name: Build modules
-        working-directory: common
-        run: |
-          make O=out \
-            ARCH=arm64 SUBARCH=arm64 \
-            LLVM=1 LLVM_IAS=1 \
-            CC=clang LD=ld.lld \
-            AR=llvm-ar NM=llvm-nm \
-            OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip \
-            -j$(nproc --all) \
-            modules 2>&1
+            echo ""
+            echo "=== Build Image ==="
+            make O=out \
+              ARCH=arm64 SUBARCH=arm64 \
+              LLVM=1 LLVM_IAS=1 \
+              CC=clang LD=ld.lld \
+              AR=llvm-ar NM=llvm-nm \
+              OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip \
+              -j$(nproc --all) \
+              V=1 Image 2>&1
 
-      - name: Build DTBs
-        working-directory: common
-        run: |
-          make O=out \
-            ARCH=arm64 SUBARCH=arm64 \
-            LLVM=1 LLVM_IAS=1 \
-            CC=clang LD=ld.lld \
-            AR=llvm-ar NM=llvm-nm \
-            OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip \
-            -j$(nproc --all) \
-            dtbs 2>&1
+            echo ""
+            echo "=== Build modules ==="
+            make O=out \
+              ARCH=arm64 SUBARCH=arm64 \
+              LLVM=1 LLVM_IAS=1 \
+              CC=clang LD=ld.lld \
+              AR=llvm-ar NM=llvm-nm \
+              OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip \
+              -j$(nproc --all) \
+              modules 2>&1
 
-      - name: Install modules
-        working-directory: common
-        run: |
-          mkdir -p "$GITHUB_WORKSPACE/out/dist/lib/modules"
-          make O=out \
-            ARCH=arm64 SUBARCH=arm64 \
-            LLVM=1 LLVM_IAS=1 \
-            CC=clang LD=ld.lld \
-            AR=llvm-ar NM=llvm-nm \
-            OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip \
-            -j$(nproc --all) \
-            modules_install INSTALL_MOD_PATH="$GITHUB_WORKSPACE/out/dist" 2>&1
+            echo ""
+            echo "=== Build DTBs ==="
+            make O=out \
+              ARCH=arm64 SUBARCH=arm64 \
+              LLVM=1 LLVM_IAS=1 \
+              CC=clang LD=ld.lld \
+              AR=llvm-ar NM=llvm-nm \
+              OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip \
+              -j$(nproc --all) \
+              dtbs 2>&1
+
+            echo ""
+            echo "=== Install modules ==="
+            mkdir -p "$GITHUB_WORKSPACE/out/dist/lib/modules"
+            make O=out \
+              ARCH=arm64 SUBARCH=arm64 \
+              LLVM=1 LLVM_IAS=1 \
+              CC=clang LD=ld.lld \
+              AR=llvm-ar NM=llvm-nm \
+              OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip \
+              -j$(nproc --all) \
+              modules_install INSTALL_MOD_PATH="$GITHUB_WORKSPACE/out/dist" 2>&1
+
+            echo ""
+            echo "=== Outputs ==="
+            ls -lh out/arch/arm64/boot/Image 2>&1 || echo "No Image"
+            find out/lib/modules -name '*.ko' 2>/dev/null | wc -l || true
+          } 2>&1 | tee "$LOG"
+          echo "log_path=$LOG" >> "$GITHUB_OUTPUT"
 
       - name: Package outputs
+        if: always()
         run: |
           mkdir -p out/dist
           cp common/out/arch/arm64/boot/Image out/dist/ 2>/dev/null || echo "WARNING: Image not found"
-          cp -r common/out/arch/arm64/boot/dts out/dist/ 2>/dev/null || echo "WARNING: dtbs not found"
-          ls -lh out/dist/
-          ls -lh out/dist/Image 2>/dev/null || true
-          find out/dist/lib/modules -name '*.ko' 2>/dev/null | wc -l || true
+          ls -lh out/dist/ 2>/dev/null || true
 
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-log-${{ matrix.variant }}
-          path: |
-            common/out/log/
-            common/out/.config
+          path: build-output.log
+          retention-days: 7
+
+      - name: Upload .config
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-config-${{ matrix.variant }}
+          path: common/out/.config
           retention-days: 7
 
       - name: Create release zip
