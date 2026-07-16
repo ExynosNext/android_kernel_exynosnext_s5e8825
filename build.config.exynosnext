@@ -1,0 +1,52 @@
+# ExynosNext Kernel Build Configuration
+# Based on ACK android17-6.18 for Samsung Exynos 1280 (s5e8825)
+
+DEFCONFIG=gki_defconfig
+POST_DEFCONFIG_FRAGMENTS="vendor_exynosnext.config"
+
+# Kernel build settings
+ARCH=arm64
+CROSS_COMPILE=aarch64-linux-gnu-
+CC=clang
+LD=ld.lld
+AR=llvm-ar
+NM=llvm-nm
+OBJCOPY=llvm-objcopy
+OBJDUMP=llvm-objdump
+STRIP=llvm-strip
+
+# GKI settings
+KMI_GENERATION=9
+KMI_SYMBOL_LIST=gki/aarch64/symbols/exynosnext
+
+# Build flags
+BRANCH=android17-6.18
+PLATFORM_VERSION=16
+ANDROID_MAJOR_VERSION=v
+
+# Module configuration
+VENDOR_DLKM_MODULES="
+    vendor/samsung/clock:clk_s5e8825.ko
+    vendor/samsung/display/dpu:samsung_dpu.ko
+    vendor/samsung/display/dsim:samsung_dsim.ko
+    vendor/samsung/display/panel:samsung_panel.ko
+    vendor/samsung/gpu/mali:mali_kbase.ko
+    vendor/samsung/media/mfc:samsung_mfc.ko
+    vendor/samsung/audio/codec:rt5665.ko
+    vendor/samsung/audio/codec:rt5691.ko
+    vendor/samsung/audio/amp:tfa9878.ko
+    vendor/samsung/audio/amp:aw882xx.ko
+    vendor/samsung/audio/abox:samsung_abox.ko
+    vendor/samsung/modem/cpif:samsung_cpif.ko
+    vendor/samsung/wifi/scsc:wlan.ko
+    vendor/samsung/input/touchscreen:sec_input.ko
+    vendor/samsung/sensors/sensorhub:shub.ko
+    vendor/samsung/battery/charger:s2mf301_charger.ko
+    vendor/samsung/battery/charger:hl7132.ko
+    vendor/samsung/fingerprint/egistec:etspis.ko
+"
+
+VENDOR_BOOT_MODULES="
+    vendor/samsung/clock:clk_s5e8825.ko
+    vendor/samsung/modem/cpif:samsung_cpif.ko
+"

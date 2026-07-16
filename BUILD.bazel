@@ -1,0 +1,70 @@
+# ExynosNext Kernel — Root BUILD.bazel
+
+load("@bazel_skylib//lib:selects.bzl", "selects")
+load("//common:kernel.bzl", "kernel_build", "kernel_modules_install")
+load("//common:dist.bzl", "kernel_dist")
+load("//common:kmi_symbol_list.bzl", "kmi_symbol_list")
+
+# ── KMI Symbol List ────────────────────────────────────────────────
+
+kmi_symbol_list(
+    name = "exynosnext_kmi_symbols",
+    kernel_build = "//common:kernel_aarch64",
+    symbol_list = "gki/aarch64/symbols/exynosnext",
+)
+
+# ── GKI Kernel Build ───────────────────────────────────────────────
+
+kernel_build(
+    name = "exynosnext_kernel_aarch64",
+    srcs = [
+        "//common:kernel_aarch64",
+    ],
+    base_kernel = "//common:kernel_aarch64",
+    defconfig = "gki_defconfig",
+    kmi_symbol_list = ":exynosnext_kmi_symbols",
+    modules = [
+        "//vendor/samsung/clock:samsung_clk",
+        "//vendor/samsung/display/dpu:samsung_dpu",
+        "//vendor/samsung/display/dsim:samsung_dsim",
+        "//vendor/samsung/display/panel:samsung_panel",
+        "//vendor/samsung/gpu/mali:mali_kbase",
+        "//vendor/samsung/media/mfc:samsung_mfc",
+        "//vendor/samsung/audio/codec:samsung_audio_codec",
+        "//vendor/samsung/audio/amp:samsung_audio_amp",
+        "//vendor/samsung/audio/abox:samsung_abox",
+        "//vendor/samsung/modem/cpif:samsung_cpif",
+        "//vendor/samsung/wifi/scsc:samsung_wifi",
+        "//vendor/samsung/input/touchscreen:samsung_input",
+        "//vendor/samsung/sensors/sensorhub:samsung_sensorhub",
+        "//vendor/samsung/battery/charger:samsung_battery",
+        "//vendor/samsung/fingerprint/egistec:samsung_fingerprint",
+    ],
+    module_outs = [
+        "clk_s5e8825.ko",
+        "samsung_dpu.ko",
+        "samsung_dsim.ko",
+        "samsung_panel.ko",
+        "mali_kbase.ko",
+        "samsung_mfc.ko",
+        "rt5665.ko",
+        "rt5691.ko",
+        "tfa9878.ko",
+        "aw882xx.ko",
+        "samsung_abox.ko",
+        "samsung_cpif.ko",
+        "wlan.ko",
+        "sec_input.ko",
+        "shub.ko",
+        "s2mf301_charger.ko",
+        "hl7132.ko",
+        "etspis.ko",
+    ],
+)
+
+# ── Distribution ────────────────────────────────────────────────────
+
+kernel_dist(
+    name = "exynosnext_dist",
+    kernel_build = ":exynosnext_kernel_aarch64",
+)

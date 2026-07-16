@@ -1,0 +1,15 @@
+# Samsung Audio Codecs — RT5665, RT5691
+
+load("//common:kernel.bzl", "ddk_module")
+
+ddk_module(
+    name = "samsung_audio_codec",
+    srcs = glob(["**/*.c"]),
+    out = [
+        "rt5665.ko",
+        "rt5691.ko",
+    ],
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)

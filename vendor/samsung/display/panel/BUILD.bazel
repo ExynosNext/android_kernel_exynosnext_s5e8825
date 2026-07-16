@@ -1,0 +1,12 @@
+# Samsung Panel Drivers — Exynos 1280 devices
+
+load("//common:kernel.bzl", "ddk_module")
+
+ddk_module(
+    name = "samsung_panel",
+    srcs = glob(["**/*.c"]),
+    out = "samsung_panel.ko",
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)

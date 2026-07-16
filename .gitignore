@@ -1,0 +1,43 @@
+# ExynosNext Kernel — .gitignore
+
+# Build output
+out/
+build/
+dist/
+*.o
+*.ko
+*.mod
+*.mod.c
+*.order
+*.symvers
+
+# Bazel
+.bazel/
+.bazelrc
+bazel-*
+user.bazelrc
+
+# ccache
+.ccache/
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Repo sync
+.repo/
+
+# Temporary
+*.tmp
+*.bak
+*.orig

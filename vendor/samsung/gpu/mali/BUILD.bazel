@@ -1,0 +1,12 @@
+# Mali GPU Driver — Exynos 1280
+
+load("//common:kernel.bzl", "ddk_module")
+
+ddk_module(
+    name = "mali_kbase",
+    srcs = glob(["**/*.c"]),
+    out = "mali_kbase.ko",
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)

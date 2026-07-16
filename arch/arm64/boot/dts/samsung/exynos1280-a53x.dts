@@ -1,0 +1,34 @@
+/*
+ * Samsung Galaxy A53 5G (SM-A536B) Device Tree
+ * ExynosNext Kernel — Linux 6.18 LTS
+ *
+ * Includes the Exynos 1280 SoC DTSI and adds A53-specific nodes.
+ * TODO: Port from Samsung's a53x DTS and device tree overlays.
+ */
+
+/dts-v1/;
+
+#include "exynos1280.dtsi"
+
+/ {
+	model = "Samsung Galaxy A53 5G (SM-A536B)";
+	compatible = "samsung,exynos1280-a53x", "samsung,exynos1280";
+
+	chosen {
+		bootargs = "androidboot.hardware=exynos1280 androidboot.fstab_version=2";
+	};
+
+	/* TODO: Add A53-specific nodes:
+	 *   - Display panel (DSI)
+	 *   - Touchscreen (Goodix, FocalTech)
+	 *   - WiFi/BT (SCSC)
+	 *   - Camera sensors (S5K2L2SQ, S5K3L6, etc.)
+	 *   - Audio codec (RT5665)
+	 *   - Battery/charger (S2MF301)
+	 *   - Fingerprint (Egistec EC6XX)
+	 *   - NFC
+	 *   - USB
+	 *   - SD card
+	 *   - GPIO/pinctrl specifics
+	 */
+};

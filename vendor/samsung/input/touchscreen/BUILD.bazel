@@ -1,0 +1,12 @@
+# Samsung Input — Touchscreen drivers
+
+load("//common:kernel.bzl", "ddk_module")
+
+ddk_module(
+    name = "samsung_input",
+    srcs = glob(["**/*.c"]),
+    out = "sec_input.ko",
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,211 @@
+# ExynosNext KMI Symbol List
+# Kernel symbols exported for Samsung vendor modules
+# Format: one symbol per line
+#
+# This list defines the stable ABI between the GKI kernel and vendor modules.
+# Only symbols listed here are available to vendor .ko files.
+
+# ── Clock Framework ────────────────────────────────────────────────
+clk_hw_register
+clk_hw_unregister
+clk_hw_get_rate
+clk_hw_set_rate
+clk_hw_get_parent
+clk_hw_set_parent
+clk_hw_get_num_parents
+clk_hw_get_name
+clk_register
+clk_unregister
+clk_set_rate
+clk_get_rate
+clk_set_parent
+clk_prepare
+clk_enable
+clk_disable
+clk_unprepare
+devm_clk_get
+devm_clk_get_optional
+devm_clk_get_prepared
+devm_clk_hw_register
+devm_clk_hw_register_fixed_rate
+clk_hw_register_fixed_rate
+clk_register_fixed_rate
+clk_hw_register_mux
+clk_hw_register_divider
+clk_hw_register_composite
+
+# ── Regulator Framework ────────────────────────────────────────────
+regulator_get
+regulator_put
+regulator_enable
+regulator_disable
+regulator_is_enabled
+regulator_set_voltage
+regulator_get_voltage
+regulator_set_current_limit
+regulator_get_current_limit
+regulator_bulk_get
+regulator_bulk_enable
+regulator_bulk_disable
+regulator_bulk_free
+regulator_notifier_register
+regulator_notifier_unregister
+devm_regulator_get
+devm_regulator_get_optional
+devm_regulator_register
+
+# ── Platform Driver ────────────────────────────────────────────────
+platform_driver_register
+platform_driver_unregister
+platform_device_register
+platform_device_unregister
+platform_device_add_data
+platform_device_add
+platform_device_del
+platform_device_put
+devm_platform_ioremap_resource
+devm_platform_get_irq
+devm_platform_get_irq_optional
+of_match_device
+of_match_node
+
+# ── DMA ────────────────────────────────────────────────────────────
+dma_map_single
+dma_unmap_single
+dma_map_sg
+dma_unmap_sg
+dma_alloc_coherent
+dma_free_coherent
+dma_set_mask_and_coherent
+dma_get_required_mask
+
+# ── GPIO (Legacy bridge) ───────────────────────────────────────────
+gpio_request
+gpio_free
+gpio_direction_output
+gpio_direction_input
+gpio_get_value
+gpio_set_value
+gpio_to_irq
+gpiochip_add_data
+gpiochip_remove
+
+# ── Pinctrl ────────────────────────────────────────────────────────
+pinctrl_get
+pinctrl_put
+pinctrl_lookup_state
+pinctrl_select_state
+devm_pinctrl_get
+pinctrl_register
+pinctrl_unregister
+
+# ── I2C ────────────────────────────────────────────────────────────
+i2c_adapter
+i2c_transfer
+i2c_master_send
+i2c_master_recv
+i2c_new_client_device
+i2c_unregister_device
+i2c_smbus_read_byte_data
+i2c_smbus_write_byte_data
+i2c_smbus_read_word_data
+i2c_smbus_write_word_data
+devm_i2c_new_device
+of_find_i2c_adapter_by_node
+
+# ── SPI ────────────────────────────────────────────────────────────
+spi_register_driver
+spi_unregister_driver
+spi_sync
+spi_write
+spi_read
+spi_write_then_read
+devm_spi_get
+spi_get_device_id
+
+# ── Input Subsystem ────────────────────────────────────────────────
+input_allocate_device
+input_free_device
+input_register_device
+input_unregister_device
+input_set_abs_params
+input_set_capability
+input_report_abs
+input_report_key
+input_sync
+input_event
+
+# ── IRQ ────────────────────────────────────────────────────────────
+devm_request_threaded_irq
+devm_request_irq
+free_irq
+enable_irq
+disable_irq
+disable_irq_nosync
+irq_set_irq_type
+irq_set_irq_wake
+
+# ── Timer ──────────────────────────────────────────────────────────
+timer_setup
+mod_timer
+del_timer
+del_timer_sync
+jiffies
+msecs_to_jiffies
+usecs_to_jiffies
+
+# ── Workqueue ──────────────────────────────────────────────────────
+INIT_WORK
+INIT_DELAYED_WORK
+queue_work
+queue_delayed_work
+flush_work
+flush_delayed_work
+cancel_work_sync
+cancel_delayed_work_sync
+create_workqueue
+destroy_workqueue
+create_singlethread_workqueue
+
+# ── Completion ─────────────────────────────────────────────────────
+init_completion
+wait_for_completion
+wait_for_completion_timeout
+complete
+reinit_completion
+
+# ── Firmware ───────────────────────────────────────────────────────
+request_firmware
+release_firmware
+request_firmware_nowait
+firmware_request_nowait
+
+# ── Misc ───────────────────────────────────────────────────────────
+dev_err
+dev_warn
+dev_info
+dev_dbg
+dev_notice
+printk
+kzalloc
+kfree
+kmalloc
+krealloc
+kvfree
+copy_from_user
+copy_to_user
+get_user
+put_user
+msleep
+usleep_range
+udelay
+ktime_get
+ktime_get_ns
+simple_strtol
+kstrtoul
+of_property_read_u32
+of_property_read_string
+of_property_read_bool
+of_get_named_gpio
+of_get_child_by_name
+of_find_compatible_node

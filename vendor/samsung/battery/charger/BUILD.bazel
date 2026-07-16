@@ -1,0 +1,15 @@
+# Samsung Battery/Charger — Exynos 1280
+
+load("//common:kernel.bzl", "ddk_module")
+
+ddk_module(
+    name = "samsung_battery",
+    srcs = glob(["**/*.c"]),
+    out = [
+        "s2mf301_charger.ko",
+        "hl7132.ko",
+    ],
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)

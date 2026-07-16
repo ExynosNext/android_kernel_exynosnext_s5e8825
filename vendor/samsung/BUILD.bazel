@@ -1,0 +1,169 @@
+# ExynosNext Vendor Modules — Master BUILD.bazel
+# Builds all Samsung vendor modules for Exynos 1280
+
+load("//common:kernel.bzl", "ddk_module")
+
+# ── Clock Controller ────────────────────────────────────────────────────────
+
+ddk_module(
+    name = "clock",
+    srcs = ["clock/clk-s5e8825.c"],
+    out = "clk_s5e8825.ko",
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)
+
+# ── Display DPU ─────────────────────────────────────────────────────────────
+
+ddk_module(
+    name = "display_dpu",
+    srcs = glob(["display/dpu/**/*.c"]),
+    out = "samsung_dpu.ko",
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)
+
+# ── Display DSIM ────────────────────────────────────────────────────────────
+
+ddk_module(
+    name = "display_dsim",
+    srcs = glob(["display/dsim/**/*.c"]),
+    out = "samsung_dsim.ko",
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)
+
+# ── Display Panel ───────────────────────────────────────────────────────────
+
+ddk_module(
+    name = "display_panel",
+    srcs = glob(["display/panel/**/*.c"]),
+    out = "samsung_panel.ko",
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)
+
+# ── Mali GPU ────────────────────────────────────────────────────────────────
+
+ddk_module(
+    name = "gpu_mali",
+    srcs = glob(["gpu/mali/**/*.c"]),
+    out = "mali_kbase.ko",
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)
+
+# ── MFC Codec ───────────────────────────────────────────────────────────────
+
+ddk_module(
+    name = "media_mfc",
+    srcs = glob(["media/mfc/**/*.c"]),
+    out = "samsung_mfc.ko",
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)
+
+# ── Audio Codecs ────────────────────────────────────────────────────────────
+
+ddk_module(
+    name = "audio_codec",
+    srcs = glob(["audio/codec/**/*.c"]),
+    out = ["rt5665.ko", "rt5691.ko"],
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)
+
+# ── Audio Amplifiers ────────────────────────────────────────────────────────
+
+ddk_module(
+    name = "audio_amp",
+    srcs = glob(["audio/amp/**/*.c"]),
+    out = ["tfa9878.ko", "aw882xx.ko"],
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)
+
+# ── Audio ABOX ──────────────────────────────────────────────────────────────
+
+ddk_module(
+    name = "audio_abox",
+    srcs = glob(["audio/abox/**/*.c"]),
+    out = "samsung_abox.ko",
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)
+
+# ── Modem CPIF ──────────────────────────────────────────────────────────────
+
+ddk_module(
+    name = "modem_cpif",
+    srcs = glob(["modem/cpif/**/*.c"]),
+    out = "samsung_cpif.ko",
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)
+
+# ── WiFi SCSC ───────────────────────────────────────────────────────────────
+
+ddk_module(
+    name = "wifi_scsc",
+    srcs = glob(["wifi/scsc/**/*.c"]),
+    out = "wlan.ko",
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)
+
+# ── Input Touchscreen ───────────────────────────────────────────────────────
+
+ddk_module(
+    name = "input_touchscreen",
+    srcs = glob(["input/touchscreen/**/*.c"]),
+    out = "sec_input.ko",
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)
+
+# ── Sensor Hub ──────────────────────────────────────────────────────────────
+
+ddk_module(
+    name = "sensors_shub",
+    srcs = glob(["sensors/sensorhub/**/*.c"]),
+    out = "shub.ko",
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)
+
+# ── Battery/Charger ─────────────────────────────────────────────────────────
+
+ddk_module(
+    name = "battery_charger",
+    srcs = glob(["battery/charger/**/*.c"]),
+    out = ["s2mf301_charger.ko", "hl7132.ko"],
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)
+
+# ── Fingerprint ─────────────────────────────────────────────────────────────
+
+ddk_module(
+    name = "fingerprint_egistec",
+    srcs = glob(["fingerprint/egistec/**/*.c"]),
+    out = "etspis.ko",
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)

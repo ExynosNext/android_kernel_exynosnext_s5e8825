@@ -1,0 +1,15 @@
+# Samsung Audio Amplifiers — TFA9878, AW882XX
+
+load("//common:kernel.bzl", "ddk_module")
+
+ddk_module(
+    name = "samsung_audio_amp",
+    srcs = glob(["**/*.c"]),
+    out = [
+        "tfa9878.ko",
+        "aw882xx.ko",
+    ],
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)

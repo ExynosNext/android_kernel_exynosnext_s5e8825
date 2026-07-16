@@ -1,0 +1,137 @@
+/*
+ * Samsung Exynos 1280 (s5e8825) SoC Device Tree Source
+ * ExynosNext Kernel — Linux 6.18 LTS
+ *
+ * TODO: Port from Samsung's kernel source DTS files.
+ * This is a minimal placeholder showing the required structure.
+ */
+
+/dts-v1/;
+
+/ {
+	compatible = "samsung,exynos1280";
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	interrupt-parent = <&gic>;
+
+	cpus {
+		#address-cells = <2>;
+		#size-cells = <0>;
+
+		cpu@0 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a78";
+			reg = <0x0 0x0>;
+			enable-method = "psci";
+			capacity-dmips-mhz = <1024>;
+			clocks = <&clock CLK_CPU>;
+			clock-latency = <148000>;
+			operating-points-v2 = <&cpu_opp>;
+		};
+
+		cpu@1 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a78";
+			reg = <0x0 0x1>;
+			enable-method = "psci";
+			capacity-dmips-mhz = <1024>;
+			clocks = <&clock CLK_CPU>;
+			operating-points-v2 = <&cpu_opp>;
+		};
+
+		cpu@2 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a78";
+			reg = <0x0 0x2>;
+			enable-method = "psci";
+			capacity-dmips-mhz = <1024>;
+			clocks = <&clock CLK_CPU>;
+			operating-points-v2 = <&cpu_opp>;
+		};
+
+		cpu@3 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55";
+			reg = <0x0 0x3>;
+			enable-method = "psci";
+			capacity-dmips-mhz = <578>;
+			clocks = <&clock CLK_CPU>;
+			operating-points-v2 = <&cpu_opp>;
+		};
+
+		cpu@4 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a55";
+			reg = <0x0 0x4>;
+			enable-method = "psci";
+			capacity-dmips-mhz = <578>;
+			clocks = <&clock CLK_CPU>;
+			operating-points-v2 = <&cpu_opp>;
+		};
+	};
+
+	chosen {
+		stdout-path = "serial2:115200n8";
+	};
+
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0x0 0x80000000 0x0 0x80000000>;
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+	};
+
+	psci {
+		compatible = "arm,psci-1.0";
+		method = "smc";
+	};
+
+	timer {
+		compatible = "arm,armv8-timer";
+		interrupts = <1 13 0xf08>,
+			     <1 14 0xf08>,
+			     <1 11 0xf08>,
+			     <1 10 0xf08>;
+	};
+
+	gic: interrupt-controller@10000000 {
+		compatible = "arm,gic-v3";
+		#interrupt-cells = <3>;
+		interrupt-controller;
+		reg = <0x0 0x10000000 0x0 0x10000>,
+		      <0x0 0x10040000 0x0 0x20000>;
+		interrupts = <1 9 0xf04>;
+	};
+
+	clock: clock-controller@12000000 {
+		compatible = "samsung,exynos1280-clock";
+		reg = <0x0 0x12000000 0x0 0x10000>;
+		#clock-cells = <1>;
+		clocks = <&xin26m>;
+	};
+
+	xin26m: xin26m {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <26000000>;
+	};
+
+	pmu: syscon@12820000 {
+		compatible = "samsung,exynos1280-pmu", "syscon";
+		reg = <0x0 0x12820000 0x0 0x10000>;
+	};
+
+	serial2: serial@13180000 {
+		compatible = "samsung,exynos1280-uart";
+		reg = <0x0 0x13180000 0x0 0x10000>;
+		interrupts = <0 114 0>;
+		clocks = <&clock CLK_UART2>;
+		clock-names = "uart";
+		status = "okay";
+	};
+};

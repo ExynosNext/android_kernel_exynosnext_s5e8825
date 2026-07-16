@@ -1,0 +1,12 @@
+# Samsung Clock Controller — Exynos 1280
+
+load("//common:kernel.bzl", "ddk_module")
+
+ddk_module(
+    name = "samsung_clk",
+    srcs = ["clk-s5e8825.c"],
+    out = "clk_s5e8825.ko",
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)

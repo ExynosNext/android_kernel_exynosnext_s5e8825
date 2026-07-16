@@ -1,0 +1,11 @@
+# ExynosNext Kernel — MODULE.bazel
+
+module(
+    name = "exynosnext_kernel",
+    version = "6.18.0-exynosnext-v1.0",
+    compatibility_level = 1,
+)
+
+# Kleaf build system dependency
+bazel_dep(name = "kleaf", version = "0.1.0")
+bazel_dep(name = "bazel_skylib", version = "1.5.0")

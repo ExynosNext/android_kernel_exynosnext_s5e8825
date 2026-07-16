@@ -1,0 +1,12 @@
+# Egistec EC6XX Fingerprint — Exynos 1280
+
+load("//common:kernel.bzl", "ddk_module")
+
+ddk_module(
+    name = "samsung_fingerprint",
+    srcs = glob(["**/*.c"]),
+    out = "etspis.ko",
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//common:all_headers_aarch64"],
+    visibility = ["//visibility:public"],
+)

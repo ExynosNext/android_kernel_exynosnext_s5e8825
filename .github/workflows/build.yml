@@ -1,0 +1,124 @@
+name: ExynosNext Kernel CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: 'Build variant'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - ksu
+          - vanilla
+          - suksu
+      clean_build:
+        description: 'Clean build'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
+  CCACHE_MAXSIZE: 50G
+  KLEAF_NOT_BUILD_KERNEL: 0
+
+jobs:
+  build:
+    name: Build ExynosNext
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    strategy:
+      matrix:
+        variant: [ksu, vanilla]
+        include:
+          - variant: ksu
+            config_flag: '--ksu'
+            zip_suffix: 'KSU'
+          - variant: vanilla
+            config_flag: '--vanilla'
+            zip_suffix: 'Vanilla'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/lib/android
+          sudo docker image prune --all --force || true
+
+      - name: Setup environment
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            bc bison build-essential ccache curl flex git \
+            libncurses5-dev libssl-dev python3 python3-pip \
+            lz4 zip unzip tar xz-utils cpio \
+            gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+
+      - name: Setup Bazelisk
+        run: |
+          curl -Lo /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64
+          chmod +x /usr/local/bin/bazel
+
+      - name: Setup repo
+        run: |
+          mkdir -p ~/bin
+          curl -s https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          chmod a+x ~/bin/repo
+          echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Init repo
+        run: |
+          repo init -u https://android.googlesource.com/kernel/manifest \
+            -b common-android17-6.18 --depth=1
+          repo sync -j$(nproc --all) --no-tags
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-${{ runner.os }}-${{ matrix.variant }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-${{ matrix.variant }}-
+            ccache-${{ runner.os }}-
+
+      - name: Build kernel
+        run: |
+          chmod +x scripts/build.sh
+          ./scripts/build.sh --${{ matrix.variant }} --jobs=$(nproc --all)
+
+      - name: Create release zip
+        run: |
+          VERSION=$(date +%Y%m%d-%H%M)
+          ZIP_NAME="ExynosNext-${{ matrix.zip_suffix }}-${VERSION}.zip"
+          cd out/dist
+          zip -r9 "../../${ZIP_NAME}" * -x '*.git*'
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ExynosNext-${{ matrix.zip_suffix }}
+          path: '*.zip'
+          retention-days: 14
+
+      - name: Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: '*.zip'
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
