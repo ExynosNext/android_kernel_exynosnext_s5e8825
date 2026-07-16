@@ -82,11 +82,23 @@ jobs:
           chmod a+x ~/bin/repo
           echo "$HOME/bin" >> $GITHUB_PATH
 
+      - name: Prepare for repo sync
+        run: |
+          mv MODULE.bazel MODULE.bazel.bak 2>/dev/null || true
+          mv BUILD.bazel BUILD.bazel.bak 2>/dev/null || true
+          mv .bazelrc .bazelrc.bak 2>/dev/null || true
+
       - name: Init repo
         run: |
           repo init -u https://android.googlesource.com/kernel/manifest \
             -b common-android17-6.18 --depth=1
           repo sync -j$(nproc --all) --no-tags
+
+      - name: Restore overlay files
+        run: |
+          mv MODULE.bazel.bak MODULE.bazel 2>/dev/null || true
+          mv BUILD.bazel.bak BUILD.bazel 2>/dev/null || true
+          mv .bazelrc.bak .bazelrc 2>/dev/null || true
 
       - name: Restore ccache
         uses: actions/cache@v4
