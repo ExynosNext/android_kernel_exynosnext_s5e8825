@@ -111,6 +111,20 @@ jobs:
 
       - name: Build kernel
         run: |
+          echo "=== Debug: Directory structure ==="
+          pwd
+          ls -la
+          echo "=== Debug: common/ contents ==="
+          ls -la common/ 2>&1 || echo "common/ does not exist!"
+          echo "=== Debug: scripts/ contents ==="
+          ls -la scripts/
+          echo "=== Debug: build.sh line endings ==="
+          file scripts/build.sh
+          head -1 scripts/build.sh | cat -A
+          echo "=== Debug: clang available ==="
+          which clang 2>&1 || echo "clang not found!"
+          which aarch64-linux-gnu-gcc 2>&1 || echo "aarch64-linux-gnu-gcc not found!"
+          echo "=== Starting build ==="
           chmod +x scripts/build.sh
           ./scripts/build.sh --${{ matrix.variant }} --jobs=$(nproc --all)
 
