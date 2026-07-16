@@ -1,8 +1,8 @@
 # Exynos 1280 Device Tree Makefile
 # ExynosNext Kernel — Linux 6.18 LTS
-
-# SoC DTS
-dtb-$(CONFIG_ARCH_EXYNOS) += exynos1280.dtb
+#
+# Note: exynos1280.dtsi is an include-only file and is NOT built as a DTB.
+# Only device-specific .dts files produce .dtb outputs.
 
 # Device-specific DTS
 dtb-$(CONFIG_ARCH_EXYNOS) += exynos1280-a53x.dtb

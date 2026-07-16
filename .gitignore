@@ -13,7 +13,6 @@ dist/
 
 # Bazel
 .bazel/
-.bazelrc
 bazel-*
 user.bazelrc
 

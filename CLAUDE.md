@@ -45,7 +45,7 @@
 | `arch/arm64/boot/dts/samsung/exynos1280-a33x.dts` | Galaxy A33 device DTS |
 | `arch/arm64/boot/dts/samsung/exynos1280-m33x.dts` | Galaxy M33 device DTS |
 | `arch/arm64/boot/dts/samsung/exynos1280-m34x.dts` | Galaxy M34 device DTS |
-| `arch/arm64/boot/dts/samsung/exynos1280-tab-s6-lite.dts` | Tab S6 Lite device DTS |
+| `arch/arm64/boot/dts/samsung/exynos1280-gta4xls.dts` | Galaxy Tab S6 Lite device DTS |
 
 ### Clock Controller
 | File | Purpose |

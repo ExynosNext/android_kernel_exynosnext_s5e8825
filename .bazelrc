@@ -1,0 +1,17 @@
+# ExynosNext Kernel — .bazelrc
+
+# Allow sandboxing
+build --spawn_strategy=sandbox
+
+# Optimize for ARM64
+build --cpu=aarch64
+
+# Memory optimization for CI
+build --local_ram_resources=HOST_RAM*0.8
+build --local_cpu_resources=HOST_CPUS
+
+# Output base
+output_base=out/bazel
+
+# User overrides (optional)
+try-import %workspace%/user.bazelrc

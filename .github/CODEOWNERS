@@ -1,0 +1,24 @@
+# ExynosNext Kernel — Code Owners
+# These owners will be automatically requested for review
+
+# Default: all changes
+* @ExynosNext/maintainers
+
+# Build system
+*.bazel @ExynosNext/maintainers
+*.bzl @ExynosNext/maintainers
+build.config.* @ExynosNext/maintainers
+Dockerfile @ExynosNext/maintainers
+docker-compose.yml @ExynosNext/maintainers
+
+# Device trees
+arch/arm64/boot/dts/ @ExynosNext/maintainers
+
+# Clock controller
+vendor/samsung/clock/ @ExynosNext/maintainers
+
+# CI
+.github/ @ExynosNext/maintainers
+
+# Scripts
+scripts/ @ExynosNext/maintainers
