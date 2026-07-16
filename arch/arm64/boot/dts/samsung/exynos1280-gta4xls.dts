@@ -186,10 +186,10 @@
 	pinctrl-0 = <&spi1_bus>;
 };
 
-&display {
+&decon {
 	status = "okay";
 
-	dsi@13400000 {
+	dsim0 {
 		status = "okay";
 
 		panel@0 {
@@ -230,18 +230,10 @@
 	};
 };
 
-&usb20 {
+&usbdrd20 {
 	status = "okay";
 	vbus-supply = <&ldo1_reg>;
 	dr_mode = "otg";
-};
-
-&ehci {
-	status = "okay";
-};
-
-&ohci {
-	status = "okay";
 };
 
 &sdhci0 {
@@ -265,46 +257,6 @@
 	vqmmc-supply = <&ldo2_reg>;
 };
 
-&ufs {
-	status = "okay";
-	reg = <0x0 0x1e640000 0x0 0x10000>;
-};
-
-&camera {
-	status = "okay";
-
-	port@0 {
-		reg = <0>;
-
-		fimc_is_sensor@0 {
-			reg = <0>;
-			compatible = "samsung,exynos1280-sensor";
-			sensor-id = <0>;
-			vdd-mipi-supply = <&buck1_reg>;
-		};
-	};
-
-	module0 {
-		compatible = "samsung,cam-sensor-front";
-		module-position = <1>;
-		sensor-position = <0>;
-		sensor-id = <0>;
-		vddaf-supply = <&buck1_reg>;
-		vddio-supply = <&ldo2_reg>;
-
-		gpios = <&gpa0 3 GPIO_ACTIVE_HIGH>;
-
-		ports {
-			port@0 {
-				reg = <0>;
-				fimc_is_sensor_out_o: endpoint {
-					remote-endpoint = <&fimc_is_isp_in>;
-				};
-			};
-		};
-	};
-};
-
 &gpu {
 	status = "okay";
 	clocks = <&clock CLK_GPU>;
@@ -315,18 +267,11 @@
 	status = "okay";
 };
 
-&audio {
-	status = "okay";
-};
-
 &i2s0 {
 	status = "okay";
 };
 
-&pinctrl {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pin_state>;
-
+&pinctrl0 {
 	touch {
 		touch_int: touch-int {
 			pins = "gpa3-0";
@@ -443,29 +388,6 @@
 			function = "sd2_bus";
 			drive-strength = <2>;
 			bias-pull-up;
-		};
-	};
-};
-
-&thermal_zones {
-	cpu-thermal {
-		cooling-maps {
-			map0 {
-				trip = <&cpu_trip>;
-				cooling-device = <&cpu0 0 0>,
-						 <&cpu1 0 0>,
-						 <&cpu2 0 0>,
-						 <&cpu3 0 0>;
-			};
-		};
-	};
-
-	gpu-thermal {
-		cooling-maps {
-			map0 {
-				trip = <&gpu_trip>;
-				cooling-device = <&gpu 0 100>;
-			};
 		};
 	};
 };

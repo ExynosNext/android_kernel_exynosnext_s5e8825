@@ -82,7 +82,7 @@
 		#address-cells = <2>;
 		#size-cells = <0>;
 
-		cpu@0 {
+		cpu0: cpu@0 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a78";
 			reg = <0x0 0x0>;
@@ -94,7 +94,7 @@
 			psci-companion = <&psci>;
 		};
 
-		cpu@1 {
+		cpu1: cpu@1 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a78";
 			reg = <0x0 0x1>;
@@ -105,7 +105,7 @@
 			psci-companion = <&psci>;
 		};
 
-		cpu@2 {
+		cpu2: cpu@2 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a78";
 			reg = <0x0 0x2>;
@@ -116,7 +116,7 @@
 			psci-companion = <&psci>;
 		};
 
-		cpu@3 {
+		cpu3: cpu@3 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a55";
 			reg = <0x0 0x3>;
@@ -127,7 +127,7 @@
 			psci-companion = <&psci>;
 		};
 
-		cpu@4 {
+		cpu4: cpu@4 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a55";
 			reg = <0x0 0x4>;
@@ -985,7 +985,7 @@
 
 	/* ── Thermal ─────────────────────────────────────────────────────────── */
 
-	thermal-zones {
+	thermal-zones: thermal-zones {
 		cluster0-thermal {
 			polling-delay-passive = <150>;
 			polling-delay = <500>;

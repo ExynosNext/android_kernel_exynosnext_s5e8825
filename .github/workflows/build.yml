@@ -17,7 +17,6 @@ on:
           - all
           - ksu
           - vanilla
-          - suksu
       clean_build:
         description: 'Clean build'
         required: false
@@ -40,10 +39,8 @@ jobs:
         variant: [ksu, vanilla]
         include:
           - variant: ksu
-            config_flag: '--ksu'
             zip_suffix: 'KSU'
           - variant: vanilla
-            config_flag: '--vanilla'
             zip_suffix: 'Vanilla'
 
     steps:
@@ -69,13 +66,6 @@ jobs:
             clang lld llvm llvm-dev \
             gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
 
-      - name: Setup Bazelisk
-        run: |
-          curl -fsSL -o /tmp/bazelisk \
-            https://github.com/bazelbuild/bazelisk/releases/download/v1.25.0/bazelisk-linux-amd64
-          sudo install -m 755 /tmp/bazelisk /usr/local/bin/bazel
-          bazel --version
-
       - name: Setup repo
         run: |
           mkdir -p ~/bin
@@ -83,20 +73,14 @@ jobs:
           chmod a+x ~/bin/repo
           echo "$HOME/bin" >> $GITHUB_PATH
 
-      - name: Prepare for repo sync
+      - name: Init and sync kernel source
         run: |
           mv MODULE.bazel MODULE.bazel.bak 2>/dev/null || true
           mv BUILD.bazel BUILD.bazel.bak 2>/dev/null || true
           mv .bazelrc .bazelrc.bak 2>/dev/null || true
-
-      - name: Init repo
-        run: |
           repo init -u https://android.googlesource.com/kernel/manifest \
             -b common-android17-6.18 --depth=1
           repo sync -j$(nproc --all) --no-tags
-
-      - name: Restore overlay files
-        run: |
           mv MODULE.bazel.bak MODULE.bazel 2>/dev/null || true
           mv BUILD.bazel.bak BUILD.bazel 2>/dev/null || true
           mv .bazelrc.bak .bazelrc 2>/dev/null || true
@@ -110,37 +94,115 @@ jobs:
             ccache-${{ runner.os }}-${{ matrix.variant }}-
             ccache-${{ runner.os }}-
 
-      - name: Build kernel
+      - name: Verify toolchain
         run: |
-          chmod +x scripts/build.sh
-          set +e
-          ./scripts/build.sh --${{ matrix.variant }} --jobs=$(nproc --all) 2>&1 | tee /tmp/build-output.log
-          BUILD_RC=${PIPESTATUS[0]}
-          set -e
-          if [ "$BUILD_RC" -ne 0 ]; then
-            echo "::error::Build failed with exit code $BUILD_RC"
-            echo "--- Last 100 lines of build log ---"
-            tail -100 /tmp/build-output.log
-            echo "--- End of log ---"
-            exit "$BUILD_RC"
-          fi
+          echo "=== Compiler ==="
+          clang --version
+          echo "=== Linker ==="
+          ld.lld --version
+          echo "=== Cross compiler ==="
+          aarch64-linux-gnu-gcc --version | head -1
+          echo "=== Kernel source ==="
+          ls common/Makefile common/arch/arm64/configs/gki_defconfig 2>/dev/null || echo "ERROR: kernel source not found"
+          echo "=== merge_config.sh ==="
+          ls common/scripts/kconfig/merge_config.sh 2>/dev/null || echo "ERROR: merge_config.sh not found"
+          echo "=== Disk space ==="
+          df -h .
 
-      - name: Dump build log on failure
-        if: failure()
+      - name: Generate defconfig
+        working-directory: common
         run: |
-          echo "=== Full build log tail ==="
-          tail -200 /tmp/build-output.log 2>/dev/null || true
-          echo "=== common/ contents ==="
-          ls -la common/ 2>/dev/null | head -30 || echo "common/ does not exist"
-          echo "=== out/ contents ==="
-          ls -la common/out/ 2>/dev/null | head -20 || echo "common/out/ does not exist"
+          mkdir -p out
+          make O=out \
+            ARCH=arm64 SUBARCH=arm64 \
+            LLVM=1 LLVM_IAS=1 \
+            CC=clang LD=ld.lld \
+            -j$(nproc --all) \
+            gki_defconfig 2>&1
+          echo "=== defconfig complete ==="
+
+      - name: Apply vendor config
+        working-directory: common
+        run: |
+          scripts/kconfig/merge_config.sh -m -O out \
+            out/.config \
+            "$GITHUB_WORKSPACE/vendor_exynosnext.config" 2>&1
+          make O=out \
+            ARCH=arm64 SUBARCH=arm64 \
+            LLVM=1 LLVM_IAS=1 \
+            CC=clang LD=ld.lld \
+            -j$(nproc --all) \
+            olddefconfig 2>&1
+          echo "=== vendor config applied ==="
+          grep -c "=y" out/.config || true
+          grep -c "=m" out/.config || true
+
+      - name: Build kernel image
+        working-directory: common
+        run: |
+          make O=out \
+            ARCH=arm64 SUBARCH=arm64 \
+            LLVM=1 LLVM_IAS=1 \
+            CC=clang LD=ld.lld \
+            AR=llvm-ar NM=llvm-nm \
+            OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip \
+            -j$(nproc --all) \
+            Image 2>&1
+
+      - name: Build modules
+        working-directory: common
+        run: |
+          make O=out \
+            ARCH=arm64 SUBARCH=arm64 \
+            LLVM=1 LLVM_IAS=1 \
+            CC=clang LD=ld.lld \
+            AR=llvm-ar NM=llvm-nm \
+            OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip \
+            -j$(nproc --all) \
+            modules 2>&1
+
+      - name: Build DTBs
+        working-directory: common
+        run: |
+          make O=out \
+            ARCH=arm64 SUBARCH=arm64 \
+            LLVM=1 LLVM_IAS=1 \
+            CC=clang LD=ld.lld \
+            AR=llvm-ar NM=llvm-nm \
+            OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip \
+            -j$(nproc --all) \
+            dtbs 2>&1
+
+      - name: Install modules
+        working-directory: common
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/out/dist/lib/modules"
+          make O=out \
+            ARCH=arm64 SUBARCH=arm64 \
+            LLVM=1 LLVM_IAS=1 \
+            CC=clang LD=ld.lld \
+            AR=llvm-ar NM=llvm-nm \
+            OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip \
+            -j$(nproc --all) \
+            modules_install INSTALL_MOD_PATH="$GITHUB_WORKSPACE/out/dist" 2>&1
+
+      - name: Package outputs
+        run: |
+          mkdir -p out/dist
+          cp common/out/arch/arm64/boot/Image out/dist/ 2>/dev/null || echo "WARNING: Image not found"
+          cp -r common/out/arch/arm64/boot/dts out/dist/ 2>/dev/null || echo "WARNING: dtbs not found"
+          ls -lh out/dist/
+          ls -lh out/dist/Image 2>/dev/null || true
+          find out/dist/lib/modules -name '*.ko' 2>/dev/null | wc -l || true
 
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-log-${{ matrix.variant }}
-          path: /tmp/build-output.log
+          path: |
+            common/out/log/
+            common/out/.config
           retention-days: 7
 
       - name: Create release zip
@@ -152,6 +214,7 @@ jobs:
           zip -r9 "../../${ZIP_NAME}" * -x '*.git*'
 
       - name: Upload build artifacts
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: ExynosNext-${{ matrix.zip_suffix }}
