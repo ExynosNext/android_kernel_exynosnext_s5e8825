@@ -1,0 +1,11 @@
+config FINGERPRINT_EGSTEC
+	tristate "EgisTec Fingerprint Sensor"
+	depends on SPI
+	help
+	  EgisTec optical fingerprint sensor driver.
+
+config FINGERPRINT_SECURE
+	bool "Fingerprint Secure Support"
+	depends on FINGERPRINT_EGSTEC
+	help
+	  Enable secure fingerprint authentication path.

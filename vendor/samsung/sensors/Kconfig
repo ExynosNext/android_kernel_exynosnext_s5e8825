@@ -1,0 +1,59 @@
+config SHUB
+	tristate "Samsung SensorHub"
+	depends on ARCH_EXYNOS
+	help
+	  Samsung SensorHub co-processor driver for sensor management.
+
+config SHUB_PM_WAKEUP_LINUX_VER_5_4
+	bool "SensorHub PM Wakeup Linux 5.4"
+	depends on SHUB
+	help
+	  Enable PM wakeup support for Linux 5.4.
+
+config SHUB_AOIS
+	bool "SensorHub AOIS Support"
+	depends on SHUB
+	help
+	  Enable Active Optical Image Stabilization via SensorHub.
+
+config SHUB_PANEL_NOTIFY
+	bool "SensorHub Panel Notification"
+	depends on SHUB
+	help
+	  Enable panel notification support for SensorHub.
+
+config SHUB_MODULE
+	tristate "SensorHub Module"
+	depends on SHUB
+	help
+	  Samsung SensorHub loadable module support.
+
+config SHUB_LSI
+	bool "SensorHub LSI Support"
+	depends on SHUB
+	help
+	  Enable LSI (Large Scale Integration) SensorHub support.
+
+config SENSORS_SX9380
+	tristate "Semtech SX9380 Proximity Sensor"
+	depends on I2C
+	help
+	  Semtech SX9380 SAR/proximity sensor driver.
+
+config SENSORS_A96T396
+	tristate "Awinic A96T396 Touch Key"
+	depends on I2C
+	help
+	  Awinic A96T396 capacitive touch key driver.
+
+config SENSORS_ISG5320A
+	tristate "Samsung ISG5320A Force Sensor"
+	depends on I2C
+	help
+	  Samsung ISG5320A force/touch sensor driver.
+
+config SENSORS_ISG6320
+	tristate "Samsung ISG6320 Force Sensor"
+	depends on I2C
+	help
+	  Samsung ISG6320 force/touch sensor driver.

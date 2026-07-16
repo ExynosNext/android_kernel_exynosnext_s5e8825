@@ -1,6 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Samsung Galaxy Tab S6 Lite 2024 (SM-P620/P625) Device Tree
- * ExynosNext Kernel — Linux 6.18 LTS
+ * Samsung Exynos 1280 - Galaxy Tab S6 Lite (SM-P613)
+ *
+ * Copyright (C) 2024 Samsung Electronics Co., Ltd.
  */
 
 /dts-v1/;
@@ -8,25 +10,462 @@
 #include "exynos1280.dtsi"
 
 / {
-	model = "Samsung Galaxy Tab S6 Lite 2024";
+	model = "Samsung Galaxy Tab S6 Lite (SM-P613)";
 	compatible = "samsung,exynos1280-gta4xls", "samsung,exynos1280";
 
 	chosen {
-		bootargs = "androidboot.hardware=exynos1280 androidboot.fstab_version=2";
+		bootargs = "console=ttyS0,115200n8 androidboot.console=ttyS0";
 	};
 
-	/* TODO: Port from Samsung's gta4xls DTS:
-	 *   - Panel: TFT LCD (HX83102E, 10.4")
-	 *   - Touch: Goodix GT9895
-	 *   - Camera: S5K6GC1 (rear), S5K4HA (front)
-	 *   - Audio: RT5691 codec (quad speakers)
-	 *   - WiFi: SCSC
-	 *   - Battery: S2MF301 (7040mAh)
-	 *   - Fingerprint: NO
-	 *   - NFC: NO
-	 *   - S-Pen support (Wacom EMR)
-	 *   - USB: Type-C
-	 *   - Tablet form factor (landscape orientation)
-	 *   - No cellular (WiFi-only model)
-	 */
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x0 0x0 0x100000000>;
+	};
+
+	firmware {
+		s2mps34_pmic@66 {
+			compatible = "samsung,s2mps34-pmic";
+			reg = <0x66>;
+
+			rtc {
+				compatible = "samsung,s2mps34-rtc";
+			};
+
+			regulators {
+				buck1_reg: buck1 {
+					regulator-name = "vdd_mif";
+					regulator-min-microvolt = <600000>;
+					regulator-max-microvolt = <1100000>;
+					regulator-always-on;
+				};
+
+				buck2_reg: buck2 {
+					regulator-name = "vdd_cpu";
+					regulator-min-microvolt = <575000>;
+					regulator-max-microvolt = <1050000>;
+					regulator-always-on;
+				};
+
+				buck3_reg: buck3 {
+					regulator-name = "vdd_int";
+					regulator-min-microvolt = <500000>;
+					regulator-max-microvolt = <1100000>;
+					regulator-always-on;
+				};
+
+				buck4_reg: buck4 {
+					regulator-name = "vdd_batt";
+					regulator-min-microvolt = <3400000>;
+					regulator-max-microvolt = <4350000>;
+					regulator-always-on;
+					regulator-boot-on;
+				};
+
+				ldo1_reg: ldo1 {
+					regulator-name = "vdd_aud";
+					regulator-min-microvolt = <1800000>;
+					regulator-max-microvolt = <1800000>;
+				};
+
+				ldo2_reg: ldo2 {
+					regulator-name = "vddio_ap";
+					regulator-min-microvolt = <1800000>;
+					regulator-max-microvolt = <1800000>;
+				};
+
+				ldo3_reg: ldo3 {
+					regulator-name = "vddio_nfc";
+					regulator-min-microvolt = <1800000>;
+					regulator-max-microvolt = <1800000>;
+				};
+
+				ldo4_reg: ldo4 {
+					regulator-name = "vdd_cam";
+					regulator-min-microvolt = <2800000>;
+					regulator-max-microvolt = <2800000>;
+				};
+
+				ldo5_reg: ldo5 {
+					regulator-name = "vdd_touch";
+					regulator-min-microvolt = <2800000>;
+					regulator-max-microvolt = <3300000>;
+				};
+
+				ldo6_reg: ldo6 {
+					regulator-name = "vdd_batt_capacity";
+					regulator-min-microvolt = <3400000>;
+					regulator-max-microvolt = <4350000>;
+				};
+			};
+		};
+	};
+
+	battery {
+		compatible = "simple-battery";
+		voltage-min-design-microvolt = <3400000>;
+		voltage-max-design-microvolt = <4350000>;
+		energy-full-design-microwatt-hours = <27528000>;
+		charge-full-design-microamp-hours = <7040000>;
+	};
+};
+
+&i2c0 {
+	status = "okay";
+
+	s2mfs01_charger@65 {
+		compatible = "samsung,s2mfs01-charger";
+		reg = <0x65>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&s2mfs01_int>;
+		interrupt-parent = <&gpa2>;
+		interrupts = <5 IRQ_TYPE_LEVEL_LOW>;
+		monitor-voltage = <4200000>;
+		monitor-curr = <2000000>;
+		fuel-gauge-i2c = <&i2c0 0x36>;
+	};
+
+	s2mfs01_fuelgauge@36 {
+		compatible = "samsung,s2mfs01-fuelgauge";
+		reg = <0x36>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&s2mfs01_alert>;
+		interrupt-parent = <&gpa2>;
+		interrupts = <4 IRQ_TYPE_LEVEL_LOW>;
+	};
+};
+
+&i2c1 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c1_bus>;
+
+	goodix@14 {
+		compatible = "goodix,gt9916r";
+		reg = <0x14>;
+		interrupt-parent = <&gpa3>;
+		interrupts = <0 IRQ_TYPE_EDGE_FALLING>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&touch_int>;
+		reset-gpios = <&gpa3 1 GPIO_ACTIVE_LOW>;
+		vdd-supply = <&ldo5_reg>;
+		vddio-supply = <&ldo2_reg>;
+		touchscreen-size-x = <2000>;
+		touchscreen-size-y = <1200>;
+	};
+};
+
+&i2c4 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c4_bus>;
+
+	wacom@0a {
+		compatible = "wacom,wacom_i2c";
+		reg = <0x0a>;
+		interrupt-parent = <&gpa3>;
+		interrupts = <4 IRQ_TYPE_EDGE_FALLING>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&spen_int>;
+		vdd-supply = <&ldo5_reg>;
+		vdda-supply = <&ldo4_reg>;
+		reset-gpios = <&gpa3 5 GPIO_ACTIVE_LOW>;
+		wacom,i2c-touch-head-distance = <255>;
+		wacom,i2c-tp-type = <0x01>;
+		wacom,display-width = <2000>;
+		wacom,display-height = <1200>;
+	};
+};
+
+&spi0 {
+	status = "disabled";
+};
+
+&spi1 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&spi1_bus>;
+};
+
+&display {
+	status = "okay";
+
+	dsi@13400000 {
+		status = "okay";
+
+		panel@0 {
+			compatible = "samsung,s6e3fc3x01";
+			reg = <0>;
+			reset-gpios = <&gpa4 3 GPIO_ACTIVE_LOW>;
+			vdd3-supply = <&ldo5_reg>;
+			vci-supply = <&ldo4_reg>;
+			init-sequence = /bits/ 8 <0x11 0x00 0x28 0x00>;
+			width-mm = <153>;
+			height-mm = <238>;
+			orientation;
+
+			display-timings {
+				native-mode = <&timing0>;
+
+				timing0: timing0 {
+					clock-frequency = <130000000>;
+					hactive = <2000>;
+					vactive = <1200>;
+					hfront-porch = <24>;
+					hback-porch = <24>;
+					hsync-len = <8>;
+					vfront-porch = <20>;
+					vback-porch = <20>;
+					vsync-len = <8>;
+				};
+			};
+		};
+	};
+
+	backlight {
+		compatible = "pwm-backlight";
+		power-supply = <&ldo1_reg>;
+		brightness-levels = <0 255>;
+		default-brightness-level = <128>;
+		pwms = <&pwm0 0 1000000>;
+	};
+};
+
+&usb20 {
+	status = "okay";
+	vbus-supply = <&ldo1_reg>;
+	dr_mode = "otg";
+};
+
+&ehci {
+	status = "okay";
+};
+
+&ohci {
+	status = "okay";
+};
+
+&sdhci0 {
+	status = "okay";
+	bus-width = <8>;
+	mmc-hs400-1_8v;
+	mmc-hs400-enhanced-strobe;
+	disable-wp;
+	cap-mmc-highspeed;
+	broken-cd;
+};
+
+&sdhci2 {
+	status = "okay";
+	bus-width = <4>;
+	cap-sd-highspeed;
+	cap-sdio-irq;
+	disable-wp;
+	cd-gpios = <&gpa4 4 GPIO_ACTIVE_LOW>;
+	vmmc-supply = <&ldo4_reg>;
+	vqmmc-supply = <&ldo2_reg>;
+};
+
+&ufs {
+	status = "okay";
+	reg = <0x0 0x1e640000 0x0 0x10000>;
+};
+
+&camera {
+	status = "okay";
+
+	port@0 {
+		reg = <0>;
+
+		fimc_is_sensor@0 {
+			reg = <0>;
+			compatible = "samsung,exynos1280-sensor";
+			sensor-id = <0>;
+			vdd-mipi-supply = <&buck1_reg>;
+		};
+	};
+
+	module0 {
+		compatible = "samsung,cam-sensor-front";
+		module-position = <1>;
+		sensor-position = <0>;
+		sensor-id = <0>;
+		vddaf-supply = <&buck1_reg>;
+		vddio-supply = <&ldo2_reg>;
+
+		gpios = <&gpa0 3 GPIO_ACTIVE_HIGH>;
+
+		ports {
+			port@0 {
+				reg = <0>;
+				fimc_is_sensor_out_o: endpoint {
+					remote-endpoint = <&fimc_is_isp_in>;
+				};
+			};
+		};
+	};
+};
+
+&gpu {
+	status = "okay";
+	clocks = <&clock CLK_GPU>;
+	clock-names = "core";
+};
+
+&mfc {
+	status = "okay";
+};
+
+&audio {
+	status = "okay";
+};
+
+&i2s0 {
+	status = "okay";
+};
+
+&pinctrl {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pin_state>;
+
+	touch {
+		touch_int: touch-int {
+			pins = "gpa3-0";
+			function = "ext_interrupt";
+			bias-pull-up;
+			drive-strength = <0>;
+		};
+	};
+
+	spen {
+		spen_int: spen-int {
+			pins = "gpa3-4";
+			function = "ext_interrupt";
+			bias-pull-up;
+			drive-strength = <0>;
+		};
+	};
+
+	uart0 {
+		uart0_data: uart0-data {
+			pins = "gpb0-0", "gpb0-1";
+			function = "uart0";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
+
+		uart0_ctrl: uart0-ctrl {
+			pins = "gpb0-2", "gpb0-3";
+			function = "uart0";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
+	};
+
+	i2c0 {
+		i2c0_bus: i2c0-bus {
+			pins = "gpb1-0", "gpb1-1";
+			function = "i2c0";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
+	};
+
+	i2c1 {
+		i2c1_bus: i2c1-bus {
+			pins = "gpb1-2", "gpb1-3";
+			function = "i2c1";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
+	};
+
+	i2c4 {
+		i2c4_bus: i2c4-bus {
+			pins = "gpb2-0", "gpb2-1";
+			function = "i2c4";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
+	};
+
+	spi1 {
+		spi1_bus: spi1-bus {
+			pins = "gpb1-4", "gpb1-5", "gpb1-6", "gpb1-7";
+			function = "spi1";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
+	};
+
+	sdmmc0 {
+		sd0_clk: sd0-clk {
+			pins = "gpc0-0";
+			function = "sd0_clk";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
+
+		sd0_cmd: sd0-cmd {
+			pins = "gpc0-1";
+			function = "sd0_cmd";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
+
+		sd0_bus: sd0-bus {
+			pins = "gpc0-2", "gpc0-3", "gpc0-4",
+			       "gpc0-5", "gpc0-6", "gpc0-7",
+			       "gpc0-8", "gpc0-9";
+			function = "sd0_bus";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
+	};
+
+	sdmmc2 {
+		sd2_clk: sd2-clk {
+			pins = "gpc1-0";
+			function = "sd2_clk";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
+
+		sd2_cmd: sd2-cmd {
+			pins = "gpc1-1";
+			function = "sd2_cmd";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
+
+		sd2_bus: sd2-bus {
+			pins = "gpc1-2", "gpc1-3", "gpc1-4",
+			       "gpc1-5";
+			function = "sd2_bus";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
+	};
+};
+
+&thermal_zones {
+	cpu-thermal {
+		cooling-maps {
+			map0 {
+				trip = <&cpu_trip>;
+				cooling-device = <&cpu0 0 0>,
+						 <&cpu1 0 0>,
+						 <&cpu2 0 0>,
+						 <&cpu3 0 0>;
+			};
+		};
+	};
+
+	gpu-thermal {
+		cooling-maps {
+			map0 {
+				trip = <&gpu_trip>;
+				cooling-device = <&gpu 0 100>;
+			};
+		};
+	};
 };

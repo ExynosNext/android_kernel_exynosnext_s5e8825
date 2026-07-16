@@ -1,0 +1,1 @@
+obj-$(CONFIG_COMMON_CLK_S5E8825) += clk-s5e8825.o

@@ -1,0 +1,13 @@
+obj-$(CONFIG_COMMON_CLK_S5E8825)	+= clock/
+obj-$(CONFIG_DRM_SAMSUNG_DPU)		+= display/
+obj-$(CONFIG_DRM_SAMSUNG_DSI)		+= display/
+obj-$(CONFIG_DRM_SAMSUNG_PANEL)		+= display/
+obj-$(CONFIG_MALI_MIDGARD)		+= gpu/
+obj-$(CONFIG_MEDIA_SAMSUNG_MFC)		+= media/
+obj-$(CONFIG_SND_SOC_SAMSUNG_ABOX)	+= audio/
+obj-$(CONFIG_SAMSUNG_CPIF)		+= modem/
+obj-$(CONFIG_SCSC_WLAN)			+= wifi/
+obj-$(CONFIG_SEC_INPUT)			+= input/
+obj-$(CONFIG_SHUB)			+= sensors/
+obj-$(CONFIG_BATTERY_SAMSUNG)		+= battery/
+obj-$(CONFIG_FINGERPRINT_EGSTEC)		+= fingerprint/

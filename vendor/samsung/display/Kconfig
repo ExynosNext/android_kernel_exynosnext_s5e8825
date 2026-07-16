@@ -1,0 +1,107 @@
+config DRM_SAMSUNG_DPU
+	tristate "Samsung Exynos Display Processing Unit"
+	depends on DRM_SAMSUNG
+	help
+	  Samsung Exynos display processing unit driver.
+
+config DRM_SAMSUNG_DSI
+	tristate "Samsung Exynos MIPI DSI Controller"
+	depends on DRM_SAMSUNG_DPU
+	help
+	  Samsung Exynos MIPI DSI controller driver.
+
+config DRM_SAMSUNG_PANEL
+	tristate "Samsung Exynos Panel Framework"
+	depends on DRM_SAMSUNG_DSI
+	help
+	  Samsung Exynos display panel framework.
+
+config DRM_MCD_PANEL
+	tristate "Samsung MCD Panel Driver"
+	depends on DRM_SAMSUNG_PANEL
+	help
+	  Samsung MCD (Mobile Content Display) panel driver.
+
+config DRM_MCD_HDR
+	bool "Samsung MCD HDR Support"
+	depends on DRM_MCD_PANEL
+	help
+	  Enable HDR support for MCD panels.
+
+config USDM_MDNIE
+	tristate "Samsung MDNIE Display Mode"
+	depends on DRM_SAMSUNG_DSI
+	help
+	  Samsung MDNIE (Mobile Display Natural Image Engine) support.
+
+config USDM_MDNIE_AFC
+	bool "Samsung MDNIE AFC Support"
+	depends on USDM_MDNIE
+	help
+	  Enable MDNIE Auto Function Control.
+
+config USDM_MDNIE_TUNING
+	bool "Samsung MDNIE Tuning"
+	depends on USDM_MDNIE
+	help
+	  Enable MDNIE tuning parameters.
+
+config USDM_PANEL_COPR
+	tristate "Samsung Panel COPR Support"
+	depends on DRM_SAMSUNG_PANEL
+	help
+	  Samsung panel COPR (Color and Power Reduction) support.
+
+config PANEL_COPR
+	tristate "Samsung Panel COPR Driver"
+	depends on USDM_PANEL_COPR
+	help
+	  Samsung panel COPR driver.
+
+config PANEL_VRR_BRIDGE
+	tristate "Samsung Panel VRR Bridge"
+	depends on DRM_SAMSUNG_PANEL
+	help
+	  Samsung panel Variable Refresh Rate bridge.
+
+config PANEL_FREQ_HOP
+	tristate "Samsung Panel Frequency Hopping"
+	depends on DRM_SAMSUNG_PANEL
+	help
+	  Samsung panel frequency hopping for EMI reduction.
+
+config PANEL_DISPLAY_MODE
+	tristate "Samsung Panel Display Mode"
+	depends on DRM_SAMSUNG_PANEL
+	help
+	  Samsung panel display mode control.
+
+config PANEL_AID_DIMMING
+	tristate "Samsung Panel AID Dimming"
+	depends on DRM_SAMSUNG_PANEL
+	help
+	  Samsung panel Adaptive Image Display dimming.
+
+config PANEL_MDNIE_LIGHT_NOTIFICATION
+	tristate "Samsung MDNIE Light Notification"
+	depends on USDM_MDNIE
+	help
+	  Samsung MDNIE light notification support.
+
+config SUPPORT_DYNAMIC_HLPM
+	bool "Samsung Dynamic HLPM Support"
+	depends on DRM_SAMSUNG_PANEL
+	help
+	  Enable dynamic HLPM (High Luminance Power Mode).
+
+config MCD_PANEL_LPM
+	tristate "Samsung MCD Panel LPM"
+	depends on DRM_MCD_PANEL
+	help
+	  Samsung MCD panel Low Power Mode.
+
+config MCD_PANEL_BLIC
+	tristate "Samsung MCD Panel BLIC"
+	depends on DRM_MCD_PANEL
+	help
+	  Samsung MCD panel BackLight IC driver.

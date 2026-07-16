@@ -1,0 +1,17 @@
+config SAMSUNG_CPIF
+	tristate "Samsung CPIF (Common Protocol Interface)"
+	depends on ARCH_EXYNOS
+	help
+	  Samsung Common Protocol Interface for modem communication.
+
+config SAMSUNG_CPIF_SMP2P
+	bool "Samsung CPIF SMP2P Support"
+	depends on SAMSUNG_CPIF
+	help
+	  Enable SMP2P (Shared Memory Point to Point) for CPIF.
+
+config SAMSUNG_MODEMCTL
+	tristate "Samsung Modem Control"
+	depends on SAMSUNG_CPIF
+	help
+	  Samsung modem control driver for firmware management.

@@ -1,0 +1,131 @@
+config BATTERY_SAMSUNG
+	tristate "Samsung Battery Driver"
+	depends on POWER_SUPPLY
+	help
+	  Samsung battery driver for charging and power management.
+
+config STEP_CHARGING
+	bool "Step Charging"
+	depends on BATTERY_SAMSUNG
+	help
+	  Enable step charging algorithm for battery health.
+
+config ENABLE_FULL_BY_SOC
+	bool "Enable Full by SOC"
+	depends on BATTERY_SAMSUNG
+	help
+	  Enable full charge detection by SOC percentage.
+
+config SEC_PD
+	tristate "Samsung Power Delivery"
+	depends on BATTERY_SAMSUNG
+	help
+	  Samsung USB Power Delivery protocol support.
+
+config BATTERY_CISD
+	bool "Battery CISD"
+	depends on BATTERY_SAMSUNG
+	help
+	  Enable Battery Charging Intelligent Safety Detection.
+
+config AFC_CHARGER_MODE
+	bool "AFC Charger Mode"
+	depends on BATTERY_SAMSUNG
+	help
+	  Enable Samsung Adaptive Fast Charging protocol.
+
+config BATTERY_AGE_FORECAST
+	bool "Battery Age Forecast"
+	depends on BATTERY_SAMSUNG
+	help
+	  Enable battery age and health forecasting.
+
+config BATTERY_LOGGING
+	bool "Battery Logging"
+	depends on BATTERY_SAMSUNG
+	help
+	  Enable battery event logging.
+
+config UPDATE_BATTERY_DATA
+	bool "Update Battery Data"
+	depends on BATTERY_SAMSUNG
+	help
+	  Enable dynamic battery data updates.
+
+config LIMIT_CHARGING_DURING_CALL
+	bool "Limit Charging During Call"
+	depends on BATTERY_SAMSUNG
+	help
+	  Limit charging current during phone calls.
+
+config BATTERY_GKI
+	bool "Battery GKI Support"
+	depends on BATTERY_SAMSUNG
+	help
+	  Enable GKI (Generic Kernel Image) battery support.
+
+config SUPPORT_HV_CTRL
+	bool "HV Control"
+	depends on BATTERY_SAMSUNG
+	help
+	  Enable high voltage charging control.
+
+config BATTERY_SAMSUNG_REBOOT
+	bool "Battery Samsung Reboot"
+	depends on BATTERY_SAMSUNG
+	help
+	  Enable battery-related reboot handling.
+
+config DIRECT_CHARGING
+	tristate "Direct Charging"
+	depends on BATTERY_SAMSUNG
+	help
+	  Samsung direct charging protocol support.
+
+config CHARGER_S2MF301
+	tristate "Samsung S2MF301 Charger"
+	depends on I2C
+	help
+	  Samsung S2MF301 charging IC driver.
+
+config CHARGER_HL7132
+	tristate "Silergy HL7132 Charger"
+	depends on I2C
+	help
+	  Silergy HL7132 direct charging IC driver.
+
+config LSI_IFPMIC
+	tristate "Samsung IF PMIC"
+	depends on I2C
+	help
+	  Samsung Interface PMIC driver for battery management.
+
+config FUELGAUGE_S2MF301
+	tristate "Samsung S2MF301 Fuel Gauge"
+	depends on I2C
+	help
+	  Samsung S2MF301 fuel gauge driver for SOC measurement.
+
+config FUELGAUGE_S2MF301_USE_5MILLIOHM
+	bool "S2MF301 5 milliohm sense resistor"
+	depends on FUELGAUGE_S2MF301
+	help
+	  Use 5 milliohm sense resistor for S2MF301 fuel gauge.
+
+config UI_SOC_PROLONGING
+	bool "UI SOC Prolonging"
+	depends on BATTERY_SAMSUNG
+	help
+	  Extend UI SOC display to prevent sudden shutdowns.
+
+config HICCUP_CHARGER
+	bool "Hiccup Charger"
+	depends on BATTERY_SAMSUNG
+	help
+	  Enable hiccup charging mode for battery recovery.
+
+config SENSOR_RETENTION_USE
+	bool "Sensor Retention"
+	depends on BATTERY_SAMSUNG
+	help
+	  Enable sensor data retention during suspend.

@@ -1,21 +1,12 @@
 /*
- * Samsung Exynos 1280 (s5e8825) Clock Controller — Register definitions
- * ExynosNext Kernel — Linux 6.18 LTS
+ * Samsung Exynos 1280 (s5e8825) Clock Bindings
+ * Device Tree clock ID definitions
  *
- * Clock ID definitions for all CMU clocks.
+ * This header provides clock ID constants for use in DT nodes.
  */
 
-#ifndef _CLK_S5E8825_H
-#define _CLK_S5E8825_H
-
-#include <dt-bindings/clock/samsung,exynos1280-clk.h>
-
-/*
- * Clock IDs
- *
- * These must match the <dt-bindings/clock/samsung,exynos1280-clk.h> definitions.
- * IDs are grouped by clock type and IP block.
- */
+#ifndef _DT_BINDINGS_CLK_SAMSUNG_EXYNOS1280_H
+#define _DT_BINDINGS_CLK_SAMSUNG_EXYNOS1280_H
 
 /* PLL clocks */
 #define CLK_FIN_PLL		0
@@ -40,7 +31,6 @@
 #define CLK_DIV_D0_MIPI		32
 #define CLK_DIV_A2M		33
 #define CLK_DIV_UART		34
-#define CLK_DIV_ACLK		35
 
 /* CPU clocks */
 #define CLK_CPU			50
@@ -62,7 +52,6 @@
 #define CLK_SCLK_DECON0		75
 #define CLK_ACLK_DSIM0		76
 #define CLK_SCLK_MIPI_TX	77
-#define CLK_ACLK_DMA_A		78
 
 /* Camera clocks */
 #define CLK_ACLK_CAM		80
@@ -74,14 +63,11 @@
 /* MFC clocks */
 #define CLK_ACLK_MFC		90
 #define CLK_ACLK_MFC_NOCS	91
-#define CLK_PCLK_MFC		92
 
 /* GPU clocks */
 #define CLK_ACLK_GPU		100
 #define CLK_ACLK_GPU_NOCS	101
 #define CLK_SCLK_GPU		102
-#define CLK_SCLK_GPU_NOCS	103
-#define CLK_CLK_GPU		104
 
 /* Audio clocks */
 #define CLK_ACLK_AUD		110
@@ -129,7 +115,6 @@
 
 /* UFS clocks */
 #define CLK_ACLK_UFS		160
-#define CLK_ACLK_UFS_NOCS	161
 #define CLK_SCLK_UFS		162
 
 /* MMC clocks */
@@ -140,35 +125,20 @@
 
 /* USB clocks */
 #define CLK_ACLK_USB		180
-#define CLK_ACLK_USB_NOCS	181
 #define CLK_SCLK_USB		182
 
 /* Modem clocks */
 #define CLK_ACLK_MODEM		190
-#define CLK_ACLK_MODEM_NOCS	191
 
-/* NFC clock */
+/* Other clocks */
 #define CLK_PCLK_NFC		200
-
-/* PWM clock */
 #define CLK_ACLK_PWM		210
-
-/* ADC clock */
 #define CLK_PCLK_ADCIF		220
-
-/* RTC clock */
 #define CLK_OSC_RTC		230
-
-/* DMA clocks */
 #define CLK_ACLK_DMAC0		240
 #define CLK_ACLK_DMAC1		241
 #define CLK_PCLK_DMAC1		242
-
-/* PMU/TMU clocks */
 #define CLK_PCLK_TMU		250
 #define CLK_PCLK_WDT		251
 
-/* Maximum clock ID */
-#define CLK_MAX_CLKS		256
-
-#endif /* _CLK_S5E8825_H */
+#endif /* _DT_BINDINGS_CLK_SAMSUNG_EXYNOS1280_H */

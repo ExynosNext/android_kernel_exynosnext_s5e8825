@@ -1,0 +1,36 @@
+config MALI_MIDGARD
+	tristate "ARM Mali Midgard GPU"
+	depends on ARCH_EXYNOS
+	help
+	  ARM Mali Midgard GPU kernel support for Samsung Exynos.
+
+config MALI_EXYNOS_DVFS
+	bool "Mali Exynos DVFS Support"
+	depends on MALI_MIDGARD
+	help
+	  Enable DVFS (Dynamic Voltage and Frequency Scaling) for Mali GPU.
+
+config MALI_EXYNOS_RTPM
+	bool "Mali Exynos Runtime PM"
+	depends on MALI_MIDGARD
+	help
+	  Enable runtime power management for Mali GPU.
+
+config MALI_EXYNOS_PM
+	bool "Mali Exynos Power Management"
+	depends on MALI_MIDGARD
+	depends on PM
+	help
+	  Enable power management for Mali GPU.
+
+config MALI_EXYNOS_IFPO
+	bool "Mali Exynos IFPO"
+	depends on MALI_MIDGARD
+	help
+	  Enable IFPO (Integrated Frame Buffer Power Optimization) for Mali GPU.
+
+config MALI_CL_BOOST
+	bool "Mali CL Boost"
+	depends on MALI_MIDGARD
+	help
+	  Enable CL boost for Mali GPU performance.

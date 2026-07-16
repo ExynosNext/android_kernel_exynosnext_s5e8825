@@ -1,0 +1,15 @@
+menu "Samsung Exynos 1280 Vendor Modules"
+
+source "vendor/samsung/clock/Kconfig"
+source "vendor/samsung/display/Kconfig"
+source "vendor/samsung/gpu/Kconfig"
+source "vendor/samsung/media/Kconfig"
+source "vendor/samsung/audio/Kconfig"
+source "vendor/samsung/modem/Kconfig"
+source "vendor/samsung/wifi/Kconfig"
+source "vendor/samsung/input/Kconfig"
+source "vendor/samsung/sensors/Kconfig"
+source "vendor/samsung/battery/Kconfig"
+source "vendor/samsung/fingerprint/Kconfig"
+
+endmenu

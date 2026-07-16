@@ -1,0 +1,17 @@
+config SEC_INPUT
+	tristate "Samsung Input Core"
+	depends on INPUT
+	help
+	  Samsung core input subsystem driver.
+
+config SEC_INPUT_BOOSTER
+	bool "Samsung Input Booster"
+	depends on SEC_INPUT
+	help
+	  Enable input response booster for touch latency optimization.
+
+config SEC_TOUCHSCREEN_DEVICE
+	tristate "Samsung Touchscreen Device"
+	depends on SEC_INPUT
+	help
+	  Samsung touchscreen device driver.

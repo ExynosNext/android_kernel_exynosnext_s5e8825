@@ -1,0 +1,11 @@
+config MEDIA_SAMSUNG_MFC
+	tristate "Samsung MFC (Multi-Format Codec)"
+	depends on ARCH_EXYNOS
+	help
+	  Samsung Exynos Multi-Format Codec driver for video encoding/decoding.
+
+config CONFIG_VIDEO_EXYNOS_MFC_BUFFER_ALIGN_128B
+	bool "MFC 128-byte Buffer Alignment"
+	depends on MEDIA_SAMSUNG_MFC
+	help
+	  Align MFC video buffers to 128-byte boundaries for cache performance.

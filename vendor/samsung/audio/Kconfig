@@ -1,0 +1,47 @@
+config SND_SOC_SAMSUNG_ABOX
+	tristate "Samsung ABOX Audio DSP"
+	depends on ARCH_EXYNOS
+	help
+	  Samsung ABOX (Audio Box) DSP processor driver.
+
+config SND_SOC_RT5665
+	tristate "Realtek RT5665 Audio Codec"
+	depends on I2C
+	help
+	  Realtek RT5665 audio codec driver for Samsung platforms.
+
+config SND_SOC_RT5691
+	tristate "Realtek RT5691 Audio Codec"
+	depends on I2C
+	help
+	  Realtek RT5691 audio codec driver for Samsung platforms.
+
+config SND_SOC_TFA9878
+	tristate "NXP TFA9878 Smart Audio Amplifier"
+	depends on I2C
+	help
+	  NXP TFA9878 smart audio amplifier driver.
+
+config SND_SOC_AW882XX
+	tristate "Awinic AW882XX Smart Audio Amplifier"
+	depends on I2C
+	help
+	  Awinic AW882XX smart audio amplifier driver.
+
+config SND_SOC_TAS2562
+	tristate "TI TAS2562 Audio Amplifier"
+	depends on I2C
+	help
+	  Texas Instruments TAS2562 audio amplifier driver.
+
+config SND_SOC_SAMSUNG_VTS
+	tristate "Samsung VTS (Voice Trigger Service)"
+	depends on SND_SOC_SAMSUNG_ABOX
+	help
+	  Samsung Voice Trigger Service audio driver.
+
+config SND_SOC_SAMSUNG_SLIF
+	tristate "Samsung SLIF (Sound Link Interface)"
+	depends on SND_SOC_SAMSUNG_ABOX
+	help
+	  Samsung Sound Link Interface audio driver.

@@ -1,0 +1,5 @@
+config COMMON_CLK_S5E8825
+	tristate "Samsung Exynos 1280 Clock Controller"
+	depends on ARCH_EXYNOS
+	help
+	  Samsung Exynos 1280 clock controller driver.

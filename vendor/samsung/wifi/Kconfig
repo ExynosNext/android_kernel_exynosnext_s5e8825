@@ -1,0 +1,209 @@
+config SCSC_WLAN
+	tristate "SCSC WLAN Driver"
+	depends on ARCH_EXYNOS
+	help
+	  Samsung/Infineon SCSC WLAN driver for Wi-Fi connectivity.
+
+config SCSC_WLAN_LINUX_VERSION_5_4
+	bool "SCSC WLAN Linux 5.4 Support"
+	depends on SCSC_WLAN
+	help
+	  Enable Linux 5.4 specific features for SCSC WLAN.
+
+config SCSC_WLAN_LINUX_VERSION_5_10
+	bool "SCSC WLAN Linux 5.10 Support"
+	depends on SCSC_WLAN
+	help
+	  Enable Linux 5.10 specific features for SCSC WLAN.
+
+config SCSC_WLAN_LINUX_VERSION_5_15
+	bool "SCSC WLAN Linux 5.15 Support"
+	depends on SCSC_WLAN
+	help
+	  Enable Linux 5.15 specific features for SCSC WLAN.
+
+config SCSC_WLAN_LINUX_VERSION_6_1
+	bool "SCSC WLAN Linux 6.1 Support"
+	depends on SCSC_WLAN
+	help
+	  Enable Linux 6.1 specific features for SCSC WLAN.
+
+config SCSC_WLAN_LINUX_VERSION_6_6
+	bool "SCSC WLAN Linux 6.6 Support"
+	depends on SCSC_WLAN
+	help
+	  Enable Linux 6.6 specific features for SCSC WLAN.
+
+config SCSC_WLAN_LINUX_VERSION_6_12
+	bool "SCSC WLAN Linux 6.12 Support"
+	depends on SCSC_WLAN
+	help
+	  Enable Linux 6.12 specific features for SCSC WLAN.
+
+config SCSC_WLAN_KUNIT_TEST
+	bool "SCSC WLAN KUnit Tests"
+	depends on SCSC_WLAN
+	help
+	  Enable KUnit testing for SCSC WLAN driver.
+
+config SCSC_WLAN_DEBUG
+	bool "SCSC WLAN Debug Support"
+	depends on SCSC_WLAN
+	help
+	  Enable debug features for SCSC WLAN driver.
+
+config SCSC_WLAN_MXLOGGER
+	bool "SCSC WLAN MX Logger"
+	depends on SCSC_WLAN
+	help
+	  Enable MX logger for SCSC WLAN.
+
+config SCSC_WLAN_ARP_RX_OFFLOAD
+	bool "SCSC WLAN ARP RX Offload"
+	depends on SCSC_WLAN
+	help
+	  Enable ARP RX offload for power saving.
+
+config SCSC_WLAN_TAS
+	bool "SCSC WLAN TAS (Time Average SAR)"
+	depends on SCSC_WLAN
+	help
+	  Enable Time Average SAR for SCSC WLAN.
+
+config SCSC_WLAN_TCP_ACK_SUPPRESS
+	bool "SCSC WLAN TCP ACK Suppression"
+	depends on SCSC_WLAN
+	help
+	  Enable TCP ACK suppression for throughput optimization.
+
+config SCSC_WLAN_RX_NAPI_GRO
+	bool "SCSC WLAN RX NAPI GRO"
+	depends on SCSC_WLAN
+	help
+	  Enable NAPI GRO for RX path optimization.
+
+config SCSC_WLAN_RX_NAPI_GRO_FLUSH
+	bool "SCSC WLAN RX NAPI GRO Flush"
+	depends on SCSC_WLAN_RX_NAPI_GRO
+	help
+	  Enable NAPI GRO flush for RX path.
+
+config SCSC_WLAN_RX_NAPI_GRO_KEY
+	bool "SCSC WLAN RX NAPI GRO Key"
+	depends on SCSC_WLAN_RX_NAPI_GRO
+	help
+	  Enable NAPI GRO key for RX path.
+
+config SCSC_WLAN_NAPI_DYNAMIC
+	bool "SCSC WLAN Dynamic NAPI"
+	depends on SCSC_WLAN
+	help
+	  Enable dynamic NAPI configuration.
+
+config SCSC_WLAN_LOW_LATENCY
+	bool "SCSC WLAN Low Latency Mode"
+	depends on SCSC_WLAN
+	help
+	  Enable low latency mode for real-time applications.
+
+config SCSC_WLAN_SAE
+	bool "SCSC WLAN SAE Support"
+	depends on SCSC_WLAN
+	help
+	  Enable SAE (Simultaneous Authentication of Equals) for WPA3.
+
+config SCSC_WLAN_11K
+	bool "SCSC WLAN 802.11k Support"
+	depends on SCSC_WLAN
+	help
+	  Enable 802.11k radio resource management.
+
+config SCSC_WLAN_11V
+	bool "SCSC WLAN 802.11v Support"
+	depends on SCSC_WLAN
+	help
+	  Enable 802.11v BSS transition management.
+
+config SCSC_WLAN_11R
+	bool "SCSC WLAN 802.11r Support"
+	depends on SCSC_WLAN
+	help
+	  Enable 802.11r fast BSS transition.
+
+config SCSC_WLAN_P2P
+	bool "SCSC WLAN P2P Support"
+	depends on SCSC_WLAN
+	help
+	  Enable Wi-Fi Direct (P2P) support.
+
+config SCSC_WLAN_GSCAN
+	bool "SCSC WLAN GSCAN Support"
+	depends on SCSC_WLAN
+	help
+	  Enable Google Wi-Fi scanning support.
+
+config SCSC_WLAN_BGDFS
+	bool "SCSC WLAN BGDFS Support"
+	depends on SCSC_WLAN
+	help
+	  Enable Background DFS for SCSC WLAN.
+
+config SCSC_WLAN_RSSI_MONITOR
+	bool "SCSC WLAN RSSI Monitor"
+	depends on SCSC_WLAN
+	help
+	  Enable RSSI monitoring for SCSC WLAN.
+
+config SCSC_WLAN_PKT_LOGGER
+	bool "SCSC WLAN Packet Logger"
+	depends on SCSC_WLAN
+	help
+	  Enable packet logging for SCSC WLAN.
+
+config SCSC_WLAN_FW_LOGGER
+	bool "SCSC WLAN Firmware Logger"
+	depends on SCSC_WLAN
+	help
+	  Enable firmware logging for SCSC WLAN.
+
+config SCSC_WLAN_CHIPLOGGER
+	bool "SCSC WLAN Chip Logger"
+	depends on SCSC_WLAN
+	help
+	  Enable chip-level logging for SCSC WLAN.
+
+config SCSC_WLAN_COREDUMP
+	bool "SCSC WLAN Core Dump"
+	depends on SCSC_WLAN
+	help
+	  Enable firmware core dump support.
+
+config SCSC_WLAN_DPD
+	bool "SCSC WLAN DPD Support"
+	depends on SCSC_WLAN
+	help
+	  Enable Dynamic Power Detection for SCSC WLAN.
+
+config SCSC_WLAN_HOST_RECOVERY
+	bool "SCSC WLAN Host Recovery"
+	depends on SCSC_WLAN
+	help
+	  Enable host-side recovery for SCSC WLAN.
+
+config SCSC_WLAN_AUTO_RECOVERY
+	bool "SCSC WLAN Auto Recovery"
+	depends on SCSC_WLAN
+	help
+	  Enable automatic firmware recovery.
+
+config SCSC_WLAN_KNOX
+	bool "SCSC WLAN Knox Support"
+	depends on SCSC_WLAN
+	help
+	  Enable Samsung Knox integration for SCSC WLAN.
+
+config SCSC_WLAN_OCE
+	bool "SCSC WLAN OCE Support"
+	depends on SCSC_WLAN
+	help
+	  Enable Optimized Connectivity Experience.
