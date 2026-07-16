@@ -1,0 +1,87 @@
+# ============================================================================
+# ExynosNext Kernel — Docker Compose Configuration
+# Provides isolated build environment for Linux kernel compilation
+# ============================================================================
+
+services:
+  # ── Main build service ────────────────────────────────────────────────
+  build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        JOBS: "${JOBS:-8}"
+    container_name: exynosnext-build
+    volumes:
+      - .:/workspace
+      - build-cache:/root/.ccache
+      - repo-cache:/workspace/.repo
+    working_dir: /workspace
+    environment:
+      - JOBS=${JOBS:-$(nproc)}
+      - VARIANT=${VARIANT:-ksu}
+      - CCACHE_DIR=/root/.ccache/exynosnext
+      - CCACHE_MAXSIZE=50G
+    stdin_open: true
+    tty: true
+
+  # ── Setup service (one-time environment setup) ────────────────────────
+  setup:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: exynosnext-setup
+    volumes:
+      - .:/workspace
+      - repo-cache:/workspace/.repo
+    working_dir: /workspace
+    command: >
+      bash -c "
+        echo '=== ExynosNext Setup ===' &&
+        bash scripts/setup.sh &&
+        echo '=== Syncing ACK android17-6.18 ===' &&
+        repo init -u https://android.googlesource.com/kernel/manifest \
+          -b common-android17-6.18 --depth=1 &&
+        repo sync -j\$(nproc) --no-tags &&
+        echo '=== Setup Complete ==='
+      "
+    stdin_open: true
+    tty: true
+
+  # ── Quick build service ───────────────────────────────────────────────
+  quick-build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: exynosnext-quick
+    volumes:
+      - .:/workspace
+      - build-cache:/root/.ccache
+    working_dir: /workspace
+    command: >
+      bash -c "
+        echo '=== Quick Build (skip sync) ===' &&
+        ./scripts/build.sh --${VARIANT:-ksu} --jobs=\$(nproc) &&
+        echo '=== Build Complete ==='
+      "
+    stdin_open: true
+    tty: true
+
+  # ── Flash helper service ──────────────────────────────────────────────
+  flash:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: exynosnext-flash
+    volumes:
+      - .:/workspace
+      - /dev/bus/usb:/dev/bus/usb
+    working_dir: /workspace
+    privileged: true
+    command: bash scripts/flash.sh
+    stdin_open: true
+    tty: true
+
+volumes:
+  build-cache:
+  repo-cache:

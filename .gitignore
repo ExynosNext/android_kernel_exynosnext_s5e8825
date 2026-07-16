@@ -37,6 +37,12 @@ desktop.ini
 # Repo sync
 .repo/
 
+# Samsung kernel source (downloaded, not tracked)
+vendor/samsung/kernel-source/
+
+# Docker
+docker-compose.override.yml
+
 # Temporary
 *.tmp
 *.bak
