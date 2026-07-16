@@ -27,15 +27,15 @@ on:
 env:
   CCACHE_DIR: ${{ github.workspace }}/.ccache
   CCACHE_MAXSIZE: 50G
-  KLEAF_NOT_BUILD_KERNEL: 0
 
 jobs:
   build:
-    name: Build ExynosNext
+    name: Build ExynosNext (${{ matrix.variant }})
     runs-on: ubuntu-latest
     timeout-minutes: 120
 
     strategy:
+      fail-fast: false
       matrix:
         variant: [ksu, vanilla]
         include:
@@ -70,8 +70,10 @@ jobs:
 
       - name: Setup Bazelisk
         run: |
-          curl -Lo /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64
-          chmod +x /usr/local/bin/bazel
+          curl -fsSL -o /tmp/bazelisk \
+            https://github.com/bazelbuild/bazelisk/releases/download/v1.25.0/bazelisk-linux-amd64
+          sudo install -m 755 /tmp/bazelisk /usr/local/bin/bazel
+          bazel --version
 
       - name: Setup repo
         run: |
@@ -101,6 +103,7 @@ jobs:
           ./scripts/build.sh --${{ matrix.variant }} --jobs=$(nproc --all)
 
       - name: Create release zip
+        if: success()
         run: |
           VERSION=$(date +%Y%m%d-%H%M)
           ZIP_NAME="ExynosNext-${{ matrix.zip_suffix }}-${VERSION}.zip"

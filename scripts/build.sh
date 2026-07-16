@@ -86,6 +86,8 @@ fi
 OUTDIR="$PROJECT_DIR/out"
 DISTDIR="$OUTDIR/dist"
 KDIR="$PROJECT_DIR/common"
+KERNEL_OUT="$KDIR/out"
+VENDOR_CONFIG="$PROJECT_DIR/vendor_exynosnext.config"
 
 # ── Toolchain check ─────────────────────────────────────────────────────────
 check_toolchain() {
@@ -113,7 +115,7 @@ do_clean() {
     if [[ "${CLEAN:-0}" -eq 1 ]]; then
         log_info "Cleaning build tree..."
         cd "$KDIR"
-        make ARCH=arm64 LLVM=1 LLVM_IAS=1 mrproper 2>/dev/null || true
+        make O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 mrproper 2>/dev/null || true
         rm -rf "$OUTDIR"
         log_ok "Clean complete"
     fi
@@ -133,7 +135,7 @@ do_build() {
 
     # Generate defconfig
     log_info "Generating defconfig..."
-    make -j"$JOBS" \
+    make O=out -j"$JOBS" \
         ARCH=arm64 \
         SUBARCH=arm64 \
         LLVM=1 \
@@ -143,9 +145,28 @@ do_build() {
         "$DEFCONFIG" \
         2>&1 | tail -5
 
+    # Apply vendor config fragment
+    if [[ -f "$VENDOR_CONFIG" ]]; then
+        log_info "Applying vendor config fragment..."
+        scripts/kconfig/merge_config.sh -m -O out \
+            "$KERNEL_OUT/.config" "$VENDOR_CONFIG"
+        make O=out -j"$JOBS" \
+            ARCH=arm64 \
+            SUBARCH=arm64 \
+            LLVM=1 \
+            LLVM_IAS=1 \
+            CC=clang \
+            LD=ld.lld \
+            olddefconfig \
+            2>&1 | tail -5
+        log_ok "Vendor config applied"
+    else
+        log_warn "No vendor config found at $VENDOR_CONFIG"
+    fi
+
     # Build kernel
     log_info "Compiling kernel..."
-    make -j"$JOBS" \
+    make O=out -j"$JOBS" \
         ARCH=arm64 \
         SUBARCH=arm64 \
         LLVM=1 \
