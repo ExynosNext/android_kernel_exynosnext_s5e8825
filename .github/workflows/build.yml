@@ -113,7 +113,27 @@ jobs:
       - name: Build kernel
         run: |
           chmod +x scripts/build.sh
-          ./scripts/build.sh --${{ matrix.variant }} --jobs=$(nproc --all)
+          set +e
+          ./scripts/build.sh --${{ matrix.variant }} --jobs=$(nproc --all) 2>&1 | tee /tmp/build-output.log
+          BUILD_RC=${PIPESTATUS[0]}
+          set -e
+          if [ "$BUILD_RC" -ne 0 ]; then
+            echo "::error::Build failed with exit code $BUILD_RC"
+            echo "--- Last 100 lines of build log ---"
+            tail -100 /tmp/build-output.log
+            echo "--- End of log ---"
+            exit "$BUILD_RC"
+          fi
+
+      - name: Dump build log on failure
+        if: failure()
+        run: |
+          echo "=== Full build log tail ==="
+          tail -200 /tmp/build-output.log 2>/dev/null || true
+          echo "=== common/ contents ==="
+          ls -la common/ 2>/dev/null | head -30 || echo "common/ does not exist"
+          echo "=== out/ contents ==="
+          ls -la common/out/ 2>/dev/null | head -20 || echo "common/out/ does not exist"
 
       - name: Create release zip
         if: success()
