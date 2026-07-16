@@ -1,0 +1,29 @@
+/*
+ * Samsung Galaxy M34 (SM-M346B) Device Tree
+ * ExynosNext Kernel — Linux 6.18 LTS
+ */
+
+/dts-v1/;
+
+#include "exynos1280.dtsi"
+
+/ {
+	model = "Samsung Galaxy M34 (SM-M346B)";
+	compatible = "samsung,exynos1280-m34x", "samsung,exynos1280";
+
+	chosen {
+		bootargs = "androidboot.hardware=exynos1280 androidboot.fstab_version=2";
+	};
+
+	/* TODO: Port from Samsung's m34x DTS:
+	 *   - Panel: S6E8FC3 (AMOLED, 120Hz)
+	 *   - Touch: Goodix GT9895
+	 *   - Camera: S5KGM1 (main), S5K5J1YX (ultra), GC02M2 (macro)
+	 *   - Audio: RT5665 codec
+	 *   - WiFi: SCSC
+	 *   - Battery: S2MF301 (6000mAh)
+	 *   - Fingerprint: Side-mounted
+	 *   - NFC: YES
+	 *   - USB: Type-C, 25W charging
+	 */
+};

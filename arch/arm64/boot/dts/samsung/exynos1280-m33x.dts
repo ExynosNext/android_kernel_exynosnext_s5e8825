@@ -1,0 +1,30 @@
+/*
+ * Samsung Galaxy M33 (SM-M336B) Device Tree
+ * ExynosNext Kernel — Linux 6.18 LTS
+ */
+
+/dts-v1/;
+
+#include "exynos1280.dtsi"
+
+/ {
+	model = "Samsung Galaxy M33 (SM-M336B)";
+	compatible = "samsung,exynos1280-m33x", "samsung,exynos1280";
+
+	chosen {
+		bootargs = "androidboot.hardware=exynos1280 androidboot.fstab_version=2";
+	};
+
+	/* TODO: Port from Samsung's m33x DTS:
+	 *   - Panel: TFT LCD (CSOT/Tianma)
+	 *   - Touch: Novatek NT36672
+	 *   - Camera: S5KGM1 (main), S5K5J1YX (depth), GC02M2 (macro)
+	 *   - Audio: RT5665 codec
+	 *   - WiFi: SCSC
+	 *   - Battery: S2MF301 (6000mAh)
+	 *   - Fingerprint: Side-mounted
+	 *   - NFC: NO (varies by region)
+	 *   - USB: Type-C, 15W charging
+	 *   - No AMOLED (TFT display)
+	 */
+};

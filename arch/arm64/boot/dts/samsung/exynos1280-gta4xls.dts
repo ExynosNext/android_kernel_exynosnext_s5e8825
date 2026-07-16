@@ -1,0 +1,32 @@
+/*
+ * Samsung Galaxy Tab S6 Lite 2024 (SM-P620/P625) Device Tree
+ * ExynosNext Kernel — Linux 6.18 LTS
+ */
+
+/dts-v1/;
+
+#include "exynos1280.dtsi"
+
+/ {
+	model = "Samsung Galaxy Tab S6 Lite 2024";
+	compatible = "samsung,exynos1280-gta4xls", "samsung,exynos1280";
+
+	chosen {
+		bootargs = "androidboot.hardware=exynos1280 androidboot.fstab_version=2";
+	};
+
+	/* TODO: Port from Samsung's gta4xls DTS:
+	 *   - Panel: TFT LCD (HX83102E, 10.4")
+	 *   - Touch: Goodix GT9895
+	 *   - Camera: S5K6GC1 (rear), S5K4HA (front)
+	 *   - Audio: RT5691 codec (quad speakers)
+	 *   - WiFi: SCSC
+	 *   - Battery: S2MF301 (7040mAh)
+	 *   - Fingerprint: NO
+	 *   - NFC: NO
+	 *   - S-Pen support (Wacom EMR)
+	 *   - USB: Type-C
+	 *   - Tablet form factor (landscape orientation)
+	 *   - No cellular (WiFi-only model)
+	 */
+};

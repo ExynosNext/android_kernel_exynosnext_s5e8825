@@ -1,0 +1,30 @@
+/*
+ * Samsung Galaxy A33 (SM-A336B) Device Tree
+ * ExynosNext Kernel — Linux 6.18 LTS
+ */
+
+/dts-v1/;
+
+#include "exynos1280.dtsi"
+
+/ {
+	model = "Samsung Galaxy A33 (SM-A336B)";
+	compatible = "samsung,exynos1280-a33x", "samsung,exynos1280";
+
+	chosen {
+		bootargs = "androidboot.hardware=exynos1280 androidboot.fstab_version=2";
+	};
+
+	/* TODO: Port from Samsung's a33x DTS:
+	 *   - Panel: S6E8FC3 (AMOLED, 90Hz)
+	 *   - Touch: FocalTech FT3519
+	 *   - Camera: S5K2L2SQ (main, OIS), S5K6GC1 (ultra), S5K4HA (macro), S5K5J1YX (depth)
+	 *   - Audio: RT5665 codec
+	 *   - WiFi: SCSC
+	 *   - Battery: S2MF301
+	 *   - Fingerprint: Under-display (optical)
+	 *   - NFC: YES
+	 *   - USB: Type-C, 15W charging
+	 *   - IP67 water resistance
+	 */
+};

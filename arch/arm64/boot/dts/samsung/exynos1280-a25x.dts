@@ -1,0 +1,29 @@
+/*
+ * Samsung Galaxy A25 (SM-A256E) Device Tree
+ * ExynosNext Kernel — Linux 6.18 LTS
+ */
+
+/dts-v1/;
+
+#include "exynos1280.dtsi"
+
+/ {
+	model = "Samsung Galaxy A25 (SM-A256E)";
+	compatible = "samsung,exynos1280-a25x", "samsung,exynos1280";
+
+	chosen {
+		bootargs = "androidboot.hardware=exynos1280 androidboot.fstab_version=2";
+	};
+
+	/* TODO: Port from Samsung's a25x DTS:
+	 *   - Panel: S6E8FC3 (AMOLED)
+	 *   - Touch: Goodix GT9895
+	 *   - Camera: S5K4HA (main), S5KJN1 (ultra), GC02M2 (macro)
+	 *   - Audio: RT5665 codec
+	 *   - WiFi: SCSC
+	 *   - Battery: S2MF301
+	 *   - Fingerprint: Side-mounted (Egistec)
+	 *   - NFC: YES
+	 *   - USB: Type-C, 25W charging
+	 */
+};
