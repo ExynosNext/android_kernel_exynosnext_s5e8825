@@ -135,6 +135,14 @@ jobs:
           echo "=== out/ contents ==="
           ls -la common/out/ 2>/dev/null | head -20 || echo "common/out/ does not exist"
 
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ matrix.variant }}
+          path: /tmp/build-output.log
+          retention-days: 7
+
       - name: Create release zip
         if: success()
         run: |
