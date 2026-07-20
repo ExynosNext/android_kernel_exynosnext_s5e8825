@@ -2,8 +2,9 @@
 /*
  * Samsung Galaxy A33 5G (SM-A336B) Device Tree
  *
- * Board-level peripherals: PMIC, touch, display panel, fingerprint,
- * storage.  Addresses and GPIO assignments are PLACEHOLDERS.
+ * Board-level peripherals: PMIC (S2MPS34), touchscreen, display panel,
+ * fingerprint, UFS storage, USB. Base SoC nodes come from exynos1280.dtsi
+ * (transcribed from Samsung firmware).
  */
 
 /dts-v1/;
@@ -18,15 +19,13 @@
 	compatible = "samsung,a33x", "samsung,exynos1280";
 
 	chosen {
-		bootargs = "androidboot.hardware=exynos1280";
+		bootargs = "androidboot.hardware=exynos1280 clk_ignore_unused firmware_class.path=/vendor/firmware loop.max_part=7";
 	};
 
 	memory@80000000 {
 		device_type = "memory";
-		reg = <0x0 0x80000000 0x0 0x180000000>; /* 6 GB */
+		reg = <0x0 0x80000000 0x180000000>;
 	};
-
-	/* ── Fixed regulators ─────────────────────────────────────────── */
 
 	reg_vdd_emmc: regulator-vdd-emmc {
 		compatible = "regulator-fixed";
@@ -37,40 +36,27 @@
 	};
 };
 
-/* ── UART ────────────────────────────────────────────────────────────── */
-
-&serial1 {
+&uart0 {
 	status = "okay";
 };
 
-/* ── I2C0: PMIC ─────────────────────────────────────────────────────── */
-
-&i2c0 {
+&hsi2c0 {
 	status = "okay";
 
 	s2mps34_pmic: pmic@66 {
 		compatible = "samsung,s2mps34-pmic";
 		reg = <0x66>;
-		/* Full regulator set (39 LDO + 9 BUCK) is provided by the
-		 * included exynos1280-pmic-s2mps34.dtsi. */
 	};
 };
 
-/* ── I2C1: Touchscreen ──────────────────────────────────────────────── */
-
-&i2c1 {
+&hsi2c1 {
 	status = "okay";
 
 	touchscreen@14 {
 		compatible = "goodix,gt9916r";
 		reg = <0x14>;
-		interrupt-parent = <&gph0>;
-		interrupts = <5 IRQ_TYPE_EDGE_FALLING>;
-		reset-gpios = <&gph0 6 GPIO_ACTIVE_LOW>;
 	};
 };
-
-/* ── SPI1: Fingerprint ──────────────────────────────────────────────── */
 
 &spi1 {
 	status = "okay";
@@ -78,14 +64,9 @@
 	fingerprint@0 {
 		compatible = "goodix,gf9578";
 		reg = <0>;
-		spi-max-frequency = <9000000>;
-		interrupt-parent = <&gpi0>;
-		interrupts = <6 IRQ_TYPE_EDGE_FALLING>;
-		reset-gpios = <&gpi0 7 GPIO_ACTIVE_LOW>;
+		spi-max-frequency = 9000000;
 	};
 };
-
-/* ── Display ─────────────────────────────────────────────────────────── */
 
 &decon {
 	status = "okay";
@@ -97,15 +78,15 @@
 	panel@0 {
 		compatible = "samsung,ams646ya01";
 		reg = <0>;
-		reset-gpios = <&gpi1 0 GPIO_ACTIVE_LOW>;
-		enable-gpios = <&gpi1 1 GPIO_ACTIVE_HIGH>;
 		vdd-supply = <&ldo6>;
 	};
 };
 
-/* ── eMMC ────────────────────────────────────────────────────────────── */
+&ufs {
+	status = "okay";
+};
 
-&sdhci0 {
+&dwmmc2 {
 	status = "okay";
 	bus-width = <8>;
 	cap-mmc-highspeed;
@@ -115,58 +96,22 @@
 	vmmc-supply = <&reg_vdd_emmc>;
 };
 
-/* ── SD card ─────────────────────────────────────────────────────────── */
-
-&sdhci2 {
-	status = "okay";
-	bus-width = <4>;
-	cap-sd-highspeed;
-	disable-wp;
-};
-
-/* ── USB ─────────────────────────────────────────────────────────────── */
-
 &usbdrd {
 	status = "okay";
 };
-
-&usbdrd_dwc3 {
-	dr_mode = "peripheral";
-	maximum-speed = "high-speed";
-};
-
-/* ── UFS ─────────────────────────────────────────────────────────────── */
-
-&ufshc {
-	status = "okay";
-};
-
-/* ── GPU ─────────────────────────────────────────────────────────────── */
 
 &gpu {
 	status = "okay";
 };
 
-/* ── MFC ─────────────────────────────────────────────────────────────── */
-
-&mfc {
+&abox {
 	status = "okay";
 };
 
-/* ── Audio ───────────────────────────────────────────────────────────── */
-
-&i2s0 {
+&wifibt {
 	status = "okay";
 };
 
-/* ── Modem ───────────────────────────────────────────────────────────── */
-
-&cpif {
-	status = "okay";
-};
-
-/* ── NFC ─────────────────────────────────────────────────────────────── */
-
-&nfc {
+&rtc {
 	status = "okay";
 };

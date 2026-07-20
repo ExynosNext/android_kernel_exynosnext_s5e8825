@@ -2,8 +2,9 @@
 /*
  * Samsung Galaxy A53 5G (SM-A536B) Device Tree
  *
- * Board-level peripherals: PMIC, touch, display panel, fingerprint,
- * storage.  Addresses and GPIO assignments are PLACEHOLDERS.
+ * Board-level peripherals: PMIC (S2MPS34), touchscreen, display panel,
+ * fingerprint, UFS storage, USB. Base SoC nodes come from exynos1280.dtsi
+ * (transcribed from Samsung firmware A536BXXSMGZE1).
  */
 
 /dts-v1/;
@@ -18,12 +19,12 @@
 	compatible = "samsung,a53x", "samsung,exynos1280";
 
 	chosen {
-		bootargs = "androidboot.hardware=exynos1280";
+		bootargs = "androidboot.hardware=exynos1280 clk_ignore_unused firmware_class.path=/vendor/firmware loop.max_part=7";
 	};
 
 	memory@80000000 {
 		device_type = "memory";
-		reg = <0x0 0x80000000 0x0 0x180000000>; /* 6 GB */
+		reg = <0x0 0x80000000 0x180000000>; /* 6 GB */
 	};
 
 	/* ── Fixed regulators ─────────────────────────────────────────── */
@@ -37,38 +38,34 @@
 	};
 };
 
-/* ── UART ────────────────────────────────────────────────────────────── */
+/* ── UART0: debug console ────────────────────────────────────────────── */
 
-&serial1 {
+&uart0 {
 	status = "okay";
 };
 
-/* ── I2C0: PMIC ─────────────────────────────────────────────────────── */
+/* ── HSI2C0: PMIC (S2MPS34) ─────────────────────────────────────────── */
 
-&i2c0 {
+&hsi2c0 {
 	status = "okay";
 
 	s2mps34_pmic: pmic@66 {
 		compatible = "samsung,s2mps34-pmic";
 		reg = <0x66>;
 		/* Full regulator set (39 LDO + 9 BUCK) is provided by the
-		 * included exynos1280-pmic-s2mps34.dtsi. Board-specific
-		 * constraints are applied by overriding individual regulators
-		 * here. */
+		 * included exynos1280-pmic-s2mps34.dtsi. */
 	};
 };
 
-/* ── I2C1: Touchscreen ──────────────────────────────────────────────── */
+/* ── HSI2C1: Touchscreen ────────────────────────────────────────────── */
 
-&i2c1 {
+&hsi2c1 {
 	status = "okay";
 
 	touchscreen@14 {
 		compatible = "goodix,gt9916r";
 		reg = <0x14>;
-		interrupt-parent = <&gph0>;
-		interrupts = <5 IRQ_TYPE_EDGE_FALLING>;
-		reset-gpios = <&gph0 6 GPIO_ACTIVE_LOW>;
+		/* GPIO/pinctrl wiring to be confirmed against board schematic. */
 	};
 };
 
@@ -81,9 +78,6 @@
 		compatible = "egistec,etspis";
 		reg = <0>;
 		spi-max-frequency = <9600000>;
-		interrupt-parent = <&gpi0>;
-		interrupts = <6 IRQ_TYPE_EDGE_FALLING>;
-		reset-gpios = <&gpi0 7 GPIO_ACTIVE_LOW>;
 	};
 };
 
@@ -99,15 +93,19 @@
 	panel@0 {
 		compatible = "samsung,ams646ya01";
 		reg = <0>;
-		reset-gpios = <&gpi1 0 GPIO_ACTIVE_LOW>;
-		enable-gpios = <&gpi1 1 GPIO_ACTIVE_HIGH>;
 		vdd-supply = <&ldo6>;
 	};
 };
 
-/* ── eMMC ────────────────────────────────────────────────────────────── */
+/* ── UFS (internal storage) ──────────────────────────────────────────── */
 
-&sdhci0 {
+&ufs {
+	status = "okay";
+};
+
+/* ── eMMC (DWMMC2) ──────────────────────────────────────────────────── */
+
+&dwmmc2 {
 	status = "okay";
 	bus-width = <8>;
 	cap-mmc-highspeed;
@@ -117,29 +115,9 @@
 	vmmc-supply = <&reg_vdd_emmc>;
 };
 
-/* ── SD card ─────────────────────────────────────────────────────────── */
-
-&sdhci2 {
-	status = "okay";
-	bus-width = <4>;
-	cap-sd-highspeed;
-	disable-wp;
-};
-
 /* ── USB ─────────────────────────────────────────────────────────────── */
 
 &usbdrd {
-	status = "okay";
-};
-
-&usbdrd_dwc3 {
-	dr_mode = "peripheral";
-	maximum-speed = "high-speed";
-};
-
-/* ── UFS ─────────────────────────────────────────────────────────────── */
-
-&ufshc {
 	status = "okay";
 };
 
@@ -149,26 +127,20 @@
 	status = "okay";
 };
 
-/* ── MFC ─────────────────────────────────────────────────────────────── */
-
-&mfc {
-	status = "okay";
-};
-
 /* ── Audio ───────────────────────────────────────────────────────────── */
 
-&i2s0 {
+&abox {
 	status = "okay";
 };
 
-/* ── Modem ───────────────────────────────────────────────────────────── */
+/* ── WiFi/BT ────────────────────────────────────────────────────────── */
 
-&cpif {
+&wifibt {
 	status = "okay";
 };
 
-/* ── NFC ─────────────────────────────────────────────────────────────── */
+/* ── RTC ─────────────────────────────────────────────────────────────── */
 
-&nfc {
+&rtc {
 	status = "okay";
 };

@@ -1,10 +1,145 @@
 # ExynosNext — Honest Project Status
 
-_Last reviewed: 2026-07-20_
+_Last reviewed: 2026-07-20 (post real-DT audit)_
 
 This file is the source of truth for what actually works. If a claim elsewhere in
 the repo conflicts with this file, this file is right and the other should be
 fixed.
+
+## The one thing to understand first
+
+Every **working** kernel for the Samsung Exynos 1280 (s5e8825) — Samsung's own
+open-source release, FloppyKernel, UN1CA — is **Linux 5.10.260** and uses
+Samsung's proprietary **CAL-IF** clock framework. There is **no booting kernel on
+any 6.x tree** for this SoC.
+
+ExynosNext targets **Linux 6.18 GKI (android17-6.18)**. That is a from-scratch
+bring-up, not a repackage of Samsung's source. The hard, unbounded part is
+porting the SoC support code (clock, PMIC, regulators, pinctrl, DVFS, …) from the
+5.10 CAL-IF world to 6.18, driver by driver.
+
+> **Why not Linux 7.1.4?** Linux 7.1.4 (released 2026-07-18) is the latest
+> stable mainline kernel, but it cannot boot on Exynos 1280: mainline has
+> **zero** SoC support for s5e8825 (no clock driver, no pinctrl, no PMIC, no
+> `samsung,exynos1280` compatible strings). Android ACK is built on LTS only;
+> there is no GKI branch based on 7.x. The 6.18 GKI base is the newest kernel
+> this project can realistically target.
+
+### Why "just make it hybrid" doesn't shortcut this
+
+GKI **is** the hybrid model already: a generic core Image plus vendor `.ko`
+modules. It does not remove the porting work:
+
+- Module ABI (KMI) is version-locked — a 5.10 `.ko` cannot load on 6.18. Every
+  driver must be recompiled against 6.18, fixing ~8 years of API drift.
+- The Samsung clock driver depends on the whole CAL-IF framework, not one file.
+- `samsung_clk`/CAL-IF core symbols are **not exported** to out-of-tree modules,
+  so a clock `.ko` that uses them is impossible on GKI — hence this repo's clock
+  driver uses the generic exported `clk-provider` API instead.
+
+## Real Device Tree audit (2026-07-20)
+
+The device tree shipped in Samsung's official firmware
+(`A536BXXSMGZE1`, SM-A536B / Galaxy A53 5G) was extracted from `vendor_boot.img`
+and decoded. The full decoded dump is in `docs/reference-a53-real.dts` (137
+addressed nodes). This audit **revealed that every address in the previous
+exynos1280.dtsi was wrong**:
+
+| Component | Real address (Samsung) | Previous (wrong) | Impact |
+|-----------|-------------------------|-------------------|--------|
+| Clock controller | `0x11800000` (ACPM front-end) | `0x12900000` | Clocks driven via ACPM IPC, not direct regs |
+| GIC | `0x12b00000` (**arm,gic-400 = GICv2**) | `0x10000000` (GIC-v3) | Wrong interrupt ABI entirely |
+| Mali GPU | `0x10300000` | `0x14000000` | Wrong region |
+| UFS | `0x13500000` | `0x13d00000` | Wrong region |
+| DECON (display) | `0x14940000` | `0x15100000` | Wrong region |
+| DSIM | `0x148c0000` | `0x15110000` | Wrong region |
+| UART0 | `0x13800000` | `0x13100000` | Wrong region |
+| Watchdog | `0x10060000` | `0x13910000` | Wrong region |
+| MCT (timer) | `0x10050000` | _missing_ | sched_clock source absent |
+
+### Key architectural facts learned from the real DT
+
+1. **GICv2, not GICv3**: the SoC uses `arm,gic-400` with the 3-cell GICv2
+   interrupt specifier (`<type irq flags>`). The previous dtsi assumed GICv3 —
+   this alone would have made the kernel unable to receive any interrupt.
+
+2. **Clock tree driven through ACPM IPC**: the `samsung,s5e8825-clock` node
+   uses `acpm-ipc-channel = <0>`. Samsung does not program clock registers
+   directly from Linux; it sends IPC messages to the Audio Co-Processor Manager
+   (ACPM), which programs the clock controller. This means the clock driver
+   cannot simply write `CLK_CON_GAT` registers — it must speak the ACPM mailbox
+   protocol. The `samsung,exynos_cal_if` node is the raw CAL-IF register map
+   mirror used internally by the framework.
+
+3. **CPU topology**: 6× `arm,ananke` (Cortex-A55, LITTLE, cluster0) +
+   2× `arm,hercules` (Cortex-A78, big, cluster1). Samsung uses codenames, not
+   the standard `arm,cortex-a55`/`arm,cortex-a78` strings.
+
+4. **8 pinctrl domains**: `0x11850000, 0x11430000, 0x13450000, 0x13440000,
+   0x10040000, 0x100f0000, 0x11780000, 0x111d0000` — the previous dtsi had
+   only 4 with wrong addresses.
+
+The `exynos1280.dtsi` has been **completely rewritten** using the real addresses
+and compatible strings. All 7 board DTS files were regenerated against the new
+label scheme (`uart0`/`hsi2c0`/`ufs`/`dwmmc2`/`decon`/`dsim0`/`gpu`/`abox`/
+`wifibt`/`tmu_big`/`watchdog_cl0`).
+
+## What works today
+
+| Area | State | Notes |
+|------|-------|-------|
+| GKI 6.18 core build | ✅ builds | CI syncs ACK android17-6.18, overlays this repo, builds real `Image` |
+| `vendor_exynosnext.config` | ✅ applied | Full feature set: CPUIdle/DVFS, thermal, USB OTG, UFS, encryption, crypto, BPF, etc. |
+| KernelSU-Next (KSU variant) | ✅ integrated in CI | Real `setup.sh` integration |
+| Clock driver | 🟡 compiles, **incomplete** | Generic `clk-provider` API; **real Samsung clocks use ACPM IPC** — this driver cannot actually program them. Needs ACPM mailbox porting. |
+| KMI symbol list | ✅ complete | All symbols used by the clock driver are present |
+| Device DTBs | ✅ compile | 7 board DTBs; **all addresses now match Samsung's real DT**; all phandle references resolve |
+| CPU topology | ✅ correct | 8 cores (6×Ananke/A55 + 2×Hercules/A78) with `cpu-map`, OPP tables, idle-states |
+| GIC | ✅ correct | `arm,gic-400` (GICv2) at `0x12b00000` — was wrongly GICv3 before |
+| MCT timer | ✅ present | `samsung,exynos4210-mct` at `0x10050000` — was missing before |
+| Real DT reference | ✅ included | `docs/reference-a53-real.dts` — full 137-node decoded Samsung DT |
+| Flash tool / scripts | ✅ usable | Interactive TUI |
+
+## What does NOT work yet
+
+| Area | State | Blocker |
+|------|-------|---------|
+| ACPM mailbox driver | ❌ not ported | **This is THE blocker.** Samsung clocks are driven via ACPM IPC, not direct register writes. Without the ACPM mailbox driver + firmware, no clock can be programmed. |
+| 13 vendor modules | ❌ no source | display, gpu, media, audio, modem, wifi, input, sensors, battery, fingerprint are empty scaffolds |
+| PMIC / pinctrl / regulators | ❌ not ported | S2MPS34 driver + exynos pinctrl driver must be ported from 5.10 |
+| Bazel/Kleaf build | ⚠️ untested | CI uses make-based GKI build |
+| Booting on a device | ❌ | Requires ACPM + clock + PMIC + pinctrl |
+
+## Roadmap (in dependency order)
+
+1. **ACPM mailbox driver**: port `drivers/soc/samsung/acpm` from 5.10. This is
+   the foundation — the clock controller, DVFS, and PMIC all talk to the ACPM
+   co-processor. Without it, nothing can be programmed.
+2. **Clock driver rewrite**: replace the current direct-register stubs with an
+   ACPM-based clock driver that sends IPC messages to program clocks.
+3. **PMIC (S2MPS34) + pinctrl**: port these from 5.10; they use ACPM for some
+   operations.
+4. **Reach a console**: with ACPM + clock + pinctrl + UART, the kernel can
+   reach early boot console — the first measurable milestone.
+5. **Per-subsystem modules**: display → input → the rest.
+
+Reference trees for the port:
+- https://github.com/FlopKernel-Series/flop_s5e8825_kernel (Linux 5.10.260)
+- https://github.com/UN1CA/kernel_samsung_s5e8825
+- https://opensource.samsung.com/ (official, search by model, e.g. SM-A536B)
+
+## How the real DT was extracted
+
+1. `tar -xf` the firmware zip (libarchive handles the >4GB entries).
+2. Extracted `vendor_boot.img.lz4` → `vendor_boot.img`.
+3. Located the DTB magic `0xd00dfeed` inside `vendor_boot.img`.
+4. Decoded the FDT (Flattened DeviceTree) format with a Python parser.
+5. Cross-referenced every node address against the previous dtsi — found all
+   addresses wrong.
+
+The decoded dump is committed as `docs/reference-a53-real.dts` for future
+reference and verification.
+
 
 ## The one thing to understand first
 
