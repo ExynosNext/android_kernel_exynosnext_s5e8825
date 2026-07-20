@@ -89,6 +89,10 @@ When porting drivers from Samsung's 5.10 kernel to 6.18:
 
 - Use standard `dt-bindings/` headers
 - Follow existing patterns in `arch/arm64/boot/dts/samsung/`
+- Use the **real addresses** from the firmware audit — see
+  `docs/reference-a53-real.dts` for the decoded Samsung DT. Do not invent
+  addresses; if a node address is unknown, mark it with a TODO comment.
+- Use **GICv2** 3-cell interrupt specifiers (`<GIC_SPI irq IRQ_TYPE_*>`)
 - Test DTS compilation: `make ARCH=arm64 dtbs`
 
 ## Testing
@@ -96,23 +100,18 @@ When porting drivers from Samsung's 5.10 kernel to 6.18:
 ### Build Testing
 
 ```bash
-# Full build
-docker compose run build
+# Full build (mirrors CI)
+./scripts/build.sh
 
-# Quick build (skip sync)
-docker compose run quick-build
+# Or via Docker
+./scripts/docker-build.sh
 ```
-
-### Hardware Testing
-
-1. Flash kernel to device
-2. Check kernel log: `adb shell dmesg | head -100`
-3. Test all peripherals (display, touch, WiFi, audio, camera)
-4. Report any regressions
 
 ### CI
 
-All pull requests are automatically tested via GitHub Actions. The CI builds both KSU and vanilla variants.
+All pull requests are automatically tested via GitHub Actions. The CI builds
+**four variants**: `vanilla`, `ksu`, `vanilla-oneui`, `ksu-oneui`. A PR that
+breaks any variant's build will fail CI.
 
 ## Getting Help
 

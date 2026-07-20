@@ -2,7 +2,21 @@
 
 ## Samsung Exynos 1280 Vendor Module Porting: 5.10 → 6.18
 
-**Last Updated:** 2026-07-16
+**Last Updated:** 2026-07-20 (post firmware DT audit)
+
+---
+
+## ⚠️ Critical Discovery: ACPM is the #1 Blocker
+
+The firmware DT audit (see `docs/reference-a53-real.dts`) revealed that
+Samsung's clock tree is **not** driven by direct register writes. The
+`samsung,s5e8825-clock` node uses `acpm-ipc-channel = <0>`, meaning clocks
+are programmed via **ACPM IPC** (Audio Co-Processor Manager Inter-Process
+Communication).
+
+This changes the porting order: the **ACPM mailbox driver** must be ported
+before the clock driver can actually program clocks. The current
+`clk-s5e8825.c` compiles but cannot function without ACPM.
 
 ---
 
@@ -18,33 +32,76 @@
 
 ---
 
-## Module Dependency Order
+## Module Dependency Order (Revised)
 
-Modules must be ported in this order due to hardware and software dependencies. Blocking dependencies mean the upstream module **must** compile and load before downstream work can proceed.
+Modules must be ported in this order due to hardware and software dependencies.
+Blocking dependencies mean the upstream module **must** compile and load before
+downstream work can proceed.
 
-| # | Module | Description | Blocks |
-|---|--------|-------------|--------|
-| 1 | **Clock Controller** | Clock tree and gate control | Everything |
-| 2 | **Power Domains** | Power domain management | GPU, Display, Audio, Camera, MFC, Modem |
-| 3 | **Pinctrl/GPIO** | Pin multiplexing and GPIO | I2C, SPI, UART, MMC |
-| 4 | **UFS** | Storage controller | Must boot first |
-| 5 | **Display** | DECON → DSIM → Panel | — |
-| 6 | **Touchscreen** | Input touchscreen | Needs I2C |
-| 7 | **Audio** | I2S/TDM → ABOX → Codecs | — |
-| 8 | **WiFi** | SCSC wireless | — |
-| 9 | **Modem** | CPIF modem interface | — |
-| 10 | **Battery/Charger** | Power supply | — |
-| 11 | **Sensors** | Sensor hub | — |
-| 12 | **Fingerprint** | Fingerprint reader | — |
-| 13 | **GPU** | Mali GPU | Most complex |
-| 14 | **MFC** | Multi-Format Codec | — |
+| # | Module | Description | Blocks | Status |
+|---|--------|-------------|--------|--------|
+| 0 | **ACPM Mailbox** | AP↔CP IPC for clock/DVFS/PMIC | Clock, PMIC, DVFS | ⏳ |
+| 1 | **Clock Controller** | Clock tree and gate control | Everything | ⚠️ Blocked by #0 |
+| 2 | **Power Domains** | Power domain management | GPU, Display, Audio, Camera, MFC, Modem | ⏳ |
+| 3 | **Pinctrl/GPIO** | Pin multiplexing and GPIO | I2C, SPI, UART, MMC | ⏳ |
+| 4 | **UFS** | Storage controller | Must boot first | ⏳ |
+| 5 | **Display** | DECON → DSIM → Panel | — | ⏳ |
+| 6 | **Touchscreen** | Input touchscreen | Needs I2C | ⏳ |
+| 7 | **Audio** | I2S/TDM → ABOX → Codecs | — | ⏳ |
+| 8 | **WiFi** | SCSC wireless | — | ⏳ |
+| 9 | **Modem** | CPIF modem interface | — | ⏳ |
+| 10 | **Battery/Charger** | Power supply | — | ⏳ |
+| 11 | **Sensors** | Sensor hub | — | ⏳ |
+| 12 | **Fingerprint** | Fingerprint reader | — | ⏳ |
+| 13 | **GPU** | Mali GPU | Most complex | ⏳ |
+| 14 | **MFC** | Multi-Format Codec | — | ⏳ |
 | 15 | **Camera** | Camera ISP pipeline | Most complex |
 
-**Minimum boot chain:** Clock Controller → Power Domains → Pinctrl → UFS → Display (at least panel init for framebuffer)
+**Minimum boot chain:** ACPM Mailbox → Clock Controller → Power Domains → Pinctrl → UFS → Display (at least panel init for framebuffer)
 
 ---
 
 ## Detailed Module Tracking
+
+---
+
+### 0. ACPM Mailbox (THE Blocker)
+
+| Field | Value |
+|-------|-------|
+| **Module** | `acpm.ko` (or built-in) |
+| **Source** | `drivers/soc/samsung/acpm/` (Samsung 5.10) |
+| **Target** | `vendor/samsung/soc/acpm/` |
+| **Status** | ⏳ Not Started |
+| **Difficulty** | Hard |
+| **Blocks** | Clock controller, PMIC, DVFS, thermal |
+
+**Why this is #0 (before clock):**
+
+The firmware DT audit revealed that the `samsung,s5e8825-clock` node uses
+`acpm-ipc-channel = <0>`. Samsung does not program clock registers directly
+from Linux — it sends IPC messages to the ACPM co-processor, which programs
+the clock controller. Without the ACPM mailbox driver:
+
+- No clock can be enabled or disabled.
+- No DVFS (CPU/GPU frequency scaling) can work.
+- The PMIC cannot be controlled (S2MPS34 uses ACPM for regulator ops).
+
+**Porting Notes:**
+- Port `drivers/soc/samsung/exynos-acpm/` from the 5.10 source.
+- The mailbox framework changed significantly between 5.10 and 6.18 — the
+  `mailbox` subsystem API was refactored.
+- ACPM firmware is loaded from `/vendor/firmware/` — ensure the firmware
+  binary is available.
+- The `mailbox_cp` node is at `0x15000000` with IRQ 290.
+
+**Checklist:**
+- [ ] Extract ACPM source from Samsung 5.10 tree
+- [ ] Port mailbox framework API changes to 6.18
+- [ ] Port the ACPM protocol (IPC message format, channel management)
+- [ ] Port the ACPM power management hooks
+- [ ] Verify ACPM firmware loads from `/vendor/firmware/`
+- [ ] Test IPC round-trip with the ACPM co-processor
 
 ---
 
