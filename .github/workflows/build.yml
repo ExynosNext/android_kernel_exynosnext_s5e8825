@@ -164,6 +164,27 @@ jobs:
           # Copy the include/ headers to the module root so klog.h is found.
           cp -r KernelSU-Next/kernel/include/* drivers/kernelsu/
 
+          # Patch sepolicy.c: the dup_sepolicy function references
+          # policydb.android_netlink_route / android_netlink_getneigh and
+          # POLICYDB_CONFIG_ANDROID_NETLINK_* which are Samsung-private
+          # SELinux extensions not present in ACK 6.18. Wrap the config-fixup
+          # block in #if 0 so the code compiles against mainline SELinux.
+          python3 - <<'PYEOF'
+          import re
+          p = "drivers/kernelsu/selinux/sepolicy.c"
+          c = open(p, encoding="utf-8").read()
+          start = c.find("    // https://android-review.googlesource.com/c/kernel/common/+/3009995")
+          if start < 0:
+              print("sepolicy.c: config-fixup block not found (already patched?)")
+          else:
+              end = c.find("    }", start)
+              end = c.find("}", end + 2) + 1
+              block = c[start:end]
+              c = c[:start] + "#if 0 // PATCHED for ACK 6.18: Samsung-private SELinux fields absent\n" + block + "\n#endif\n" + c[end:]
+              open(p, "w", encoding="utf-8").write(c)
+              print("sepolicy.c: config-fixup block disabled with #if 0")
+          PYEOF
+
           # Wire KSU into the kernel build.
           grep -q 'kernelsu' drivers/Makefile || \
             printf '\nobj-$(CONFIG_KSU) += kernelsu/\n' >> drivers/Makefile
