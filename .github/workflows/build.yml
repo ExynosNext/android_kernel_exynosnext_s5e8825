@@ -154,6 +154,11 @@ jobs:
           rm -rf drivers/kernelsu
           cp -r KernelSU-Next/kernel drivers/kernelsu
 
+          # The KSU source uses #include "uapi/app_profile.h" which resolves
+          # relative to the module root (drivers/kernelsu/uapi/). Copy the
+          # top-level uapi/ directory there so the include resolves.
+          cp -r KernelSU-Next/uapi drivers/kernelsu/uapi
+
           # Wire KSU into the kernel build.
           grep -q 'kernelsu' drivers/Makefile || \
             printf '\nobj-$(CONFIG_KSU) += kernelsu/\n' >> drivers/Makefile
