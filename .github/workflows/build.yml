@@ -128,28 +128,30 @@ jobs:
         if: contains(matrix.variant, 'ksu')
         working-directory: common
         run: |
-          # Official KernelSU-Next setup: adds KernelSU-Next/ and drivers/kernelsu,
-          # wiring itself into the kernel Kconfig/Makefile. GKI uses the kprobe hooks.
-          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s next
-          echo "KSU_VERSION=$(cd KernelSU-Next && git describe --tags --always 2>/dev/null || echo unknown)" >> "$GITHUB_ENV"
-          echo "=== KernelSU-Next integrated: $KSU_VERSION ==="
+          # Manual KSU-Next integration. We avoid the upstream setup.sh
+          # because it calls `git checkout next` which fails on a fresh
+          # clone (the default branch is `dev`, and `origin/next` isn't
+          # fetched by a plain `git clone`). The dev branch's Kbuild
+          # already sets ccflags-y += -I$(KSU_KERNEL_DIR)/include, so the
+          # `uapi/app_profile.h` include resolves without manual mirroring.
+          set -x
+          git clone --depth=1 --branch dev \
+            https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU-Next
+          KSU_TAG="$(cd KernelSU-Next && git describe --tags --always 2>/dev/null || echo unknown)"
+          echo "KSU_VERSION=${KSU_TAG}" >> "$GITHUB_ENV"
 
-          # KSU-Next ships UAPI headers under drivers/kernelsu/include/uapi/ but
-          # the in-tree build on ACK 6.18 doesn't always pick up that include path,
-          # causing 'uapi/app_profile.h' not found. Mirror the UAPI headers into
-          # the kernel's own include/uapi/linux/ tree so the compiler finds them.
-          KSU_UAPI="drivers/kernelsu/include/uapi"
-          if [ -d "$KSU_UAPI" ]; then
-            mkdir -p include/uapi/linux/kernelsu
-            cp -v "$KSU_UAPI"/*.h include/uapi/linux/kernelsu/ 2>/dev/null || true
-            # Also keep them where KSU expects, by adding the include path
-            # to drivers/kernelsu/Makefile if not already present.
-            KSU_MK="drivers/kernelsu/Makefile"
-            if [ -f "$KSU_MK" ] && ! grep -q 'ccflags-y.*kernelsu/include' "$KSU_MK"; then
-              printf '\nccflags-y += -I$(srctree)/drivers/kernelsu/include\n' >> "$KSU_MK"
-            fi
-            echo "=== KSU UAPI headers mirrored ==="
-          fi
+          # Create the drivers/kernelsu symlink (relative so it works
+          # regardless of absolute workspace path).
+          ln -sf ../KernelSU-Next/kernel drivers/kernelsu
+
+          # Wire KSU into the kernel build.
+          grep -q 'kernelsu' drivers/Makefile || \
+            printf '\nobj-$(CONFIG_KSU) += kernelsu/\n' >> drivers/Makefile
+          grep -q 'drivers/kernelsu/Kconfig' drivers/Kconfig || \
+            sed -i '/endmenu/i\source "drivers/kernelsu/Kconfig"' drivers/Kconfig
+
+          echo "=== KernelSU-Next integrated: ${KSU_TAG} ==="
+          ls -la drivers/kernelsu/Kbuild drivers/kernelsu/include/uapi/
 
       - name: Restore ccache
         uses: actions/cache@v4
