@@ -56,7 +56,7 @@ jobs:
 
     steps:
       - name: Checkout ExynosNext overlay
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           path: exynosnext
           fetch-depth: 1
@@ -197,7 +197,7 @@ jobs:
           ls -la drivers/kernelsu/include/klog.h
 
       - name: Restore ccache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ccache-${{ runner.os }}-${{ matrix.variant }}-${{ github.sha }}
@@ -361,7 +361,7 @@ jobs:
 
       - name: Upload kernel config
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: config-${{ matrix.variant }}
           path: common/out/.config
@@ -369,7 +369,7 @@ jobs:
 
       - name: Upload flashable bundle
         if: success()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: ExynosNext-GKI-${{ matrix.variant }}
           path: out/dist/
