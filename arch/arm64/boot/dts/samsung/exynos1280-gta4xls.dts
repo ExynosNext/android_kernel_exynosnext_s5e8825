@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0
+﻿// SPDX-License-Identifier: GPL-2.0
 /*
  * Samsung Galaxy Tab S6 Lite (SM-P613) Device Tree
  *
@@ -63,7 +63,7 @@
 	fingerprint@0 {
 		compatible = "egistec,etspis";
 		reg = <0>;
-		spi-max-frequency = 9600000;
+		spi-max-frequency = <9600000>;
 	};
 };
 

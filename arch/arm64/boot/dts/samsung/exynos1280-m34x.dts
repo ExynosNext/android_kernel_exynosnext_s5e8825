@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0
+﻿// SPDX-License-Identifier: GPL-2.0
 /*
  * Samsung Galaxy M34 5G (SM-M346B) Device Tree
  *
@@ -63,7 +63,7 @@
 	fingerprint@0 {
 		compatible = "goodix,gf9578";
 		reg = <0>;
-		spi-max-frequency = 9000000;
+		spi-max-frequency = <9000000>;
 	};
 };
 
