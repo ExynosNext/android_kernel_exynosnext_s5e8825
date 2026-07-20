@@ -159,6 +159,11 @@ jobs:
           # top-level uapi/ directory there so the include resolves.
           cp -r KernelSU-Next/uapi drivers/kernelsu/uapi
 
+          # Similarly, #include "klog.h" (used by core/init.c and
+          # feature/kernel_umount.c) resolves relative to the module root.
+          # Copy the include/ headers to the module root so klog.h is found.
+          cp -r KernelSU-Next/kernel/include/* drivers/kernelsu/
+
           # Wire KSU into the kernel build.
           grep -q 'kernelsu' drivers/Makefile || \
             printf '\nobj-$(CONFIG_KSU) += kernelsu/\n' >> drivers/Makefile
