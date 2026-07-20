@@ -26,7 +26,7 @@
 / {
 	compatible = "samsung,exynos1280";
 	#address-cells = <2>;
-	#size-cells = <1>;
+	#size-cells = <2>;
 
 	interrupt-parent = <&gic>;
 
@@ -58,7 +58,7 @@
 
 	memory@80000000 {
 		device_type = "memory";
-		reg = <0x0 0x80000000 0x80000000>;
+		reg = <0x0 0x80000000 0x0 0x80000000>;
 	};
 
 	psci {
@@ -721,6 +721,8 @@
 			reg-names = "dsi", "dphy", "dphy-extra", "votf";
 			interrupts = <GIC_SPI 0xfc IRQ_TYPE_LEVEL_HIGH>;
 			interrupt-names = "dsim";
+			#address-cells = <1>;
+			#size-cells = <0>;
 			status = "disabled";
 		};
 

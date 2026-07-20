@@ -376,5 +376,13 @@ jobs:
           ZIP="ExynosNext-GKI-${SUFFIX}-${VERSION}.zip"
           (cd out/dist && zip -r9 "../../${ZIP}" . -x '*.git*')
           echo "Created ${ZIP}"
+
+          # Create/update the GitHub release with this variant's zip.
+          TAG="${GITHUB_REF#refs/tags/}"
+          gh release create "$TAG" "$ZIP" \
+            --title "$TAG" \
+            --notes "ExynosNext GKI build $TAG ($SUFFIX variant)" \
+            --prerelease 2>/dev/null || \
+          gh release upload "$TAG" "$ZIP" --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

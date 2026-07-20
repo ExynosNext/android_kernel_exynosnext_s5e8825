@@ -650,11 +650,21 @@ static int exynos1280_clk_probe(struct platform_device *pdev)
 
 static void exynos1280_clk_remove(struct platform_device *pdev)
 {
+	struct exynos1280_clk *clk = platform_get_drvdata(pdev);
+	int i;
+
 	of_clk_del_provider(pdev->dev.of_node);
+
+	/* Unregister all clocks we registered in probe to avoid leaks. */
+	for (i = 0; i < CLK_MAX_CLKS; i++) {
+		if (clk->data->hws[i] && !IS_ERR(clk->data->hws[i]))
+			clk_hw_unregister(clk->data->hws[i]);
+	}
 }
 
 static const struct of_device_id exynos1280_clk_of_match[] = {
-	{ .compatible = "samsung,exynos1280-clock" },
+	{ .compatible = "samsung,s5e8825-clock" },
+	{ .compatible = "samsung,exynos1280-clock" }, /* alias */
 	{ }
 };
 MODULE_DEVICE_TABLE(of, exynos1280_clk_of_match);
