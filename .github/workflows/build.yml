@@ -5,17 +5,19 @@ name: ExynosNext GKI CI
 #
 #   It syncs Google's ACK android17-6.18 GKI tree into common/, overlays this
 #   repo's device-tree / include / vendor-module / KMI files on top, then
-#   builds:
-#     1. A real GKI kernel Image with vendor_exynosnext.config applied.
-#     2. The Exynos 1280 device DTBs (exynos1280-{a53x,a25x,...}.dtb).
-#     3. The clock controller vendor module (clk-s5e8825.ko).
+#   builds four variants:
+#     1. vanilla       — GKI Image + DTBs + clock module, no root.
+#     2. ksu           — as above + KernelSU-Next root.
+#     3. vanilla-oneui — vanilla + oneui.config fragment (Samsung OneUI hooks).
+#     4. ksu-oneui     — ksu + oneui.config fragment (Samsung OneUI + root).
 #
-#   The `ksu` variant additionally integrates KernelSU-Next; `vanilla` does
-#   not — that is the ONLY difference between the two variants.
+#   The *-oneui variants apply oneui.config on top of vendor_exynosnext.config,
+#   enabling Samsung vendor hooks, SELinux develop mode, binderfs, and the
+#   other hooks OneUI user-space expects from the kernel.
 #
 #   The remaining 13 Samsung vendor modules (display, gpu, audio, modem,
-#   wifi, ...) are scaffolding with no ported source yet — see docs/STATUS.md
-#   and docs/PORTING.md. They are not built until their source lands.
+#   wifi, input, sensors, battery, fingerprint) are scaffolding with no ported
+#   source yet — see docs/STATUS.md and docs/PORTING.md. They are not built.
 # ─────────────────────────────────────────────────────────────────────────────
 
 on:
@@ -50,7 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        variant: [ksu, vanilla]
+        variant: [vanilla, ksu, vanilla-oneui, ksu-oneui]
 
     steps:
       - name: Checkout ExynosNext overlay
@@ -110,11 +112,20 @@ jobs:
           if ! grep -q 'vendor/samsung/Makefile' common/Makefile; then
             printf '\nobj-y += vendor/samsung/\n' >> common/Makefile
           fi
+          # Register the samsung DTS subdirectory so 'make dtbs' builds it.
+          # ACK has no Exynos support, so arch/arm64/boot/dts/Makefile does
+          # not list 'samsung' in subdir-y — add it explicitly.
+          DTS_MK="common/arch/arm64/boot/dts/Makefile"
+          if ! grep -q 'subdir-y += samsung' "$DTS_MK"; then
+            printf '\nsubdir-y += samsung\n' >> "$DTS_MK"
+          fi
           echo "=== Overlay applied ==="
           ls common/arch/arm64/boot/dts/samsung/exynos1280*.dts | head
+          echo "=== DTS subdir registration ==="
+          grep -n 'samsung' "$DTS_MK" || echo "WARNING: samsung not registered"
 
       - name: Integrate KernelSU-Next
-        if: matrix.variant == 'ksu'
+        if: contains(matrix.variant, 'ksu')
         working-directory: common
         run: |
           # Official KernelSU-Next setup: adds KernelSU-Next/ and drivers/kernelsu,
@@ -122,6 +133,23 @@ jobs:
           curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s next
           echo "KSU_VERSION=$(cd KernelSU-Next && git describe --tags --always 2>/dev/null || echo unknown)" >> "$GITHUB_ENV"
           echo "=== KernelSU-Next integrated: $KSU_VERSION ==="
+
+          # KSU-Next ships UAPI headers under drivers/kernelsu/include/uapi/ but
+          # the in-tree build on ACK 6.18 doesn't always pick up that include path,
+          # causing 'uapi/app_profile.h' not found. Mirror the UAPI headers into
+          # the kernel's own include/uapi/linux/ tree so the compiler finds them.
+          KSU_UAPI="drivers/kernelsu/include/uapi"
+          if [ -d "$KSU_UAPI" ]; then
+            mkdir -p include/uapi/linux/kernelsu
+            cp -v "$KSU_UAPI"/*.h include/uapi/linux/kernelsu/ 2>/dev/null || true
+            # Also keep them where KSU expects, by adding the include path
+            # to drivers/kernelsu/Makefile if not already present.
+            KSU_MK="drivers/kernelsu/Makefile"
+            if [ -f "$KSU_MK" ] && ! grep -q 'ccflags-y.*kernelsu/include' "$KSU_MK"; then
+              printf '\nccflags-y += -I$(srctree)/drivers/kernelsu/include\n' >> "$KSU_MK"
+            fi
+            echo "=== KSU UAPI headers mirrored ==="
+          fi
 
       - name: Restore ccache
         uses: actions/cache@v4
@@ -143,8 +171,17 @@ jobs:
             "$GITHUB_WORKSPACE/exynosnext/vendor_exynosnext.config"
 
           # Enable KernelSU-Next when integrated.
-          if [ "${{ matrix.variant }}" = "ksu" ]; then
+          if echo "${{ matrix.variant }}" | grep -q ksu; then
             ./scripts/config --file out/.config -e KSU
+          fi
+
+          # Apply the OneUI fragment for *-oneui variants (after the base
+          # vendor fragment). It adds Samsung vendor hooks, SELinux develop
+          # mode, binderfs, and the hooks OneUI user-space expects.
+          if echo "${{ matrix.variant }}" | grep -q oneui; then
+            scripts/kconfig/merge_config.sh -m -O out \
+              out/.config \
+              "$GITHUB_WORKSPACE/exynosnext/oneui.config"
           fi
 
           make O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 olddefconfig
@@ -206,10 +243,21 @@ jobs:
         if: success()
         run: |
           VERSION=$(date +%Y%m%d-%H%M)
-          SUFFIX=$([ "${{ matrix.variant }}" = "ksu" ] && echo KSU || echo Vanilla)
+          # Derive a human-readable suffix from the matrix variant:
+          #   ksu-oneui  -> KSU-OneUI
+          #   vanilla-oneui -> Vanilla-OneUI
+          #   ksu        -> KSU
+          #   vanilla    -> Vanilla
+          case "${{ matrix.variant }}" in
+            ksu-oneui)     SUFFIX="KSU-OneUI" ;;
+            vanilla-oneui) SUFFIX="Vanilla-OneUI" ;;
+            ksu)           SUFFIX="KSU" ;;
+            vanilla)       SUFFIX="Vanilla" ;;
+          esac
           ZIP="ExynosNext-GKI-${SUFFIX}-${VERSION}.zip"
           (cd out/dist && zip -r9 "../../${ZIP}" . -x '*.git*')
           echo "Created ${ZIP}"
+          echo "ZIP_NAME=${ZIP}" >> "$GITHUB_ENV"
 
       - name: Upload kernel artifact
         if: success()
