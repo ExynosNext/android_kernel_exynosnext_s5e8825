@@ -131,14 +131,23 @@ jobs:
           # Manual KSU-Next integration. We avoid the upstream setup.sh
           # because it calls `git checkout next` which fails on a fresh
           # clone (the default branch is `dev`, and `origin/next` isn't
-          # fetched by a plain `git clone`). The dev branch's Kbuild
-          # already sets ccflags-y += -I$(KSU_KERNEL_DIR)/include, so the
-          # `uapi/app_profile.h` include resolves without manual mirroring.
+          # fetched by a plain `git clone`).
           set -x
           git clone --depth=1 --branch dev \
             https://github.com/KernelSU-Next/KernelSU-Next.git KernelSU-Next
           KSU_TAG="$(cd KernelSU-Next && git describe --tags --always 2>/dev/null || echo unknown)"
           echo "KSU_VERSION=${KSU_TAG}" >> "$GITHUB_ENV"
+
+          # KSU-Next stores UAPI headers in a top-level `uapi/` directory,
+          # and `kernel/include/uapi` is a relative symlink to `../../uapi`.
+          # When accessed through the drivers/kernelsu symlink chain, this
+          # relative symlink may not resolve correctly in the kbuild context.
+          # Replace the symlink with a real directory copy so the compiler
+          # always finds uapi/app_profile.h.
+          if [ -L KernelSU-Next/kernel/include/uapi ]; then
+            rm KernelSU-Next/kernel/include/uapi
+            cp -r KernelSU-Next/uapi KernelSU-Next/kernel/include/uapi
+          fi
 
           # Create the drivers/kernelsu symlink (relative so it works
           # regardless of absolute workspace path).
@@ -151,7 +160,9 @@ jobs:
             sed -i '/endmenu/i\source "drivers/kernelsu/Kconfig"' drivers/Kconfig
 
           echo "=== KernelSU-Next integrated: ${KSU_TAG} ==="
-          ls -la drivers/kernelsu/Kbuild drivers/kernelsu/include/uapi/
+          ls -la drivers/kernelsu/Kbuild
+          ls -la KernelSU-Next/kernel/include/uapi/app_profile.h
+          ls -la KernelSU-Next/kernel/include/klog.h
 
       - name: Restore ccache
         uses: actions/cache@v4
