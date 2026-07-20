@@ -10,7 +10,6 @@
 /dts-v1/;
 
 #include "exynos1280.dtsi"
-#include "exynos1280-pmic-s2mps34.dtsi"
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/interrupt-controller/irq.h>
 

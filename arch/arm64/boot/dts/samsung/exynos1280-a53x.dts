@@ -10,7 +10,6 @@
 /dts-v1/;
 
 #include "exynos1280.dtsi"
-#include "exynos1280-pmic-s2mps34.dtsi"
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/interrupt-controller/irq.h>
 
@@ -52,6 +51,7 @@
 	s2mps34_pmic: pmic@66 {
 		compatible = "samsung,s2mps34-pmic";
 		reg = <0x66>;
+		#include "exynos1280-pmic-s2mps34.dtsi"
 		/* Full regulator set (39 LDO + 9 BUCK) is provided by the
 		 * included exynos1280-pmic-s2mps34.dtsi. */
 	};
