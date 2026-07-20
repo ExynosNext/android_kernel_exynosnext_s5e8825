@@ -45,6 +45,7 @@
 	s2mps34_pmic: pmic@66 {
 		compatible = "samsung,s2mps34-pmic";
 		reg = <0x66>;
+		#include "exynos1280-pmic-s2mps34.dtsi"
 	};
 };
 
