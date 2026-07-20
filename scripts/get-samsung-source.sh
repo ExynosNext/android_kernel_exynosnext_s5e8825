@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 # ============================================================================
-# Samsung Kernel Source Download Script
-# Downloads Samsung's open-source kernel release for Exynos 1280 devices
+# Samsung / Exynos 1280 reference source fetcher
+#
+# For PORTING work you want a real, git-cloneable Linux 5.10 tree for the
+# s5e8825. The community mirrors below are the practical choice; Samsung's
+# official portal ships a pristine tarball but is search/interaction gated and
+# does not expose stable direct-download URLs, so it can't be scripted reliably.
+#
+# This fetches a reference tree into vendor/samsung/kernel-source/ so
+# extract-modules.sh and manual porting can work against it.
 # ============================================================================
 
 set -euo pipefail
@@ -9,13 +16,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-RESET='\033[0m'
-
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'
+CYAN='\033[0;36m'; BOLD='\033[1m'; RESET='\033[0m'
 log()  { echo -e "${CYAN}[SAMSUNG]${RESET} $*"; }
 ok()   { echo -e "${GREEN}[OK]${RESET} $*"; }
 warn() { echo -e "${YELLOW}[WARN]${RESET} $*"; }
@@ -24,135 +26,72 @@ err()  { echo -e "${RED}[ERROR]${RESET} $*" >&2; }
 SAMSUNG_DIR="$PROJECT_DIR/vendor/samsung/kernel-source"
 mkdir -p "$SAMSUNG_DIR"
 
-echo ""
-echo -e "${BOLD}╔══════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}║   Samsung Kernel Source Downloader            ║${RESET}"
-echo -e "${BOLD}╚══════════════════════════════════════════════╝${RESET}"
-echo ""
-
-# ── Known Samsung kernel source URLs ────────────────────────────────────────
-# These are direct download links from opensource.samsung.com
-# Format: URL -> filename
-#
-# NOTE: Samsung's open source portal may change URLs.
-# If a URL fails, manually download from:
-#   https://opensource.samsung.com/uploadSearch?searchValue=A536B
-
-declare -A SOURCES=(
-    # Galaxy A53 5G - Android 16 (OneUI 8)
-    ["SM-A536B"]="https://opensource.samsung.com/uploadUploads/SM-A536B_EUR_16_Opensource.zip"
-
-    # Galaxy A25 - Android 16
-    ["SM-A256E"]="https://opensource.samsung.com/uploadUploads/SM-A256E_CIS_16_Opensource.zip"
-
-    # Galaxy A33 - Android 15
-    ["SM-A336B"]="https://opensource.samsung.com/uploadUploads/SM-A336B_EUR_15_Opensource.zip"
-
-    # Galaxy M33 - Android 15
-    ["SM-M336B"]="https://opensource.samsung.com/uploadUploads/SM-M336B_Ins_15_Opensource.zip"
-
-    # Galaxy M34 - Android 15
-    ["SM-M346B"]="https://opensource.samsung.com/uploadUploads/SM-M346B_Ins_15_Opensource.zip"
+# Reference trees: name -> "git_url|branch". These are Linux 5.10.x s5e8825
+# kernels used by working custom kernels for the Exynos 1280 family.
+declare -A REFS=(
+    ["floppy"]="https://github.com/FlopKernel-Series/flop_s5e8825_kernel|master"
+    ["un1ca"]="https://github.com/UN1CA/kernel_samsung_s5e8825|main"
 )
 
-# ── Menu ────────────────────────────────────────────────────────────────────
-echo "  Select device to download kernel source for:"
 echo ""
-echo "  ${CYAN}1)${RESET} SM-A536B (Galaxy A53 5G) — Android 16"
-echo "  ${CYAN}2)${RESET} SM-A256E (Galaxy A25) — Android 16"
-echo "  ${CYAN}3)${RESET} SM-A336B (Galaxy A33) — Android 15"
-echo "  ${CYAN}4)${RESET} SM-M336B (Galaxy M33) — Android 15"
-echo "  ${CYAN}5)${RESET} SM-M346B (Galaxy M34) — Android 15"
-echo "  ${CYAN}6)${RESET} All devices"
-echo "  ${CYAN}0)${RESET} Exit"
+echo -e "${BOLD}Exynos 1280 (s5e8825) reference source fetcher${RESET}"
 echo ""
-read -rp "  Select [1-6]: " choice
+echo "  1) FloppyKernel  — Linux 5.10.260, all s5e8825 devices (recommended)"
+echo "  2) UN1CA         — Linux 5.10.x, s5e8825"
+echo "  3) Official Samsung portal (manual instructions only)"
+echo "  0) Exit"
+echo ""
+read -rp "  Select [0-3]: " choice
 
-download_source() {
-    local model="$1"
-    local url="${SOURCES[$model]}"
-    local zipfile="$SAMSUNG_DIR/${model}_kernel_source.zip"
+clone_ref() {
+    local key="$1" entry url branch dest
+    entry="${REFS[$key]}"
+    url="${entry%%|*}"; branch="${entry##*|}"
+    dest="$SAMSUNG_DIR/$key"
 
-    if [[ -z "$url" ]]; then
-        err "No source URL known for $model"
-        return 1
-    fi
-
-    log "Downloading $model kernel source..."
-    log "URL: $url"
-
-    if command -v wget &>/dev/null; then
-        wget -q --show-progress -O "$zipfile" "$url" || {
-            err "Download failed for $model"
-            warn "Manually download from: https://opensource.samsung.com/uploadSearch?searchValue=$model"
-            return 1
-        }
-    elif command -v curl &>/dev/null; then
-        curl -L --progress-bar -o "$zipfile" "$url" || {
-            err "Download failed for $model"
-            warn "Manually download from: https://opensource.samsung.com/uploadSearch?searchValue=$model"
-            return 1
-        }
+    if [[ -d "$dest/.git" ]]; then
+        log "Updating existing clone at $dest"
+        git -C "$dest" fetch --depth=1 origin "$branch" && \
+            git -C "$dest" reset --hard "origin/$branch"
     else
-        err "Neither wget nor curl found"
-        return 1
+        log "Cloning $url ($branch) — this is large, shallow clone used"
+        git clone --depth=1 --branch "$branch" "$url" "$dest"
     fi
+    ln -sfn "$dest" "$SAMSUNG_DIR/kernel"
+    ok "Reference ready: $dest"
+    ok "Symlinked: $SAMSUNG_DIR/kernel -> $dest"
+    echo ""
+    echo "  Next: ./scripts/extract-modules.sh   (pulls drivers into place)"
+    echo "        then port each driver 5.10 -> 6.18 (see docs/PORTING.md)"
+}
 
-    if [[ ! -s "$zipfile" ]]; then
-        err "Downloaded file is empty"
-        rm -f "$zipfile"
-        return 1
-    fi
+official_portal() {
+    cat <<'EOF'
 
-    ok "Downloaded: $(du -h "$zipfile" | cut -f1)"
+  Samsung official source (pristine, per-device tarball):
 
-    # Extract
-    log "Extracting..."
-    local extract_dir="$SAMSUNG_DIR/$model"
-    mkdir -p "$extract_dir"
-    unzip -q -o "$zipfile" -d "$extract_dir" || {
-        err "Extraction failed"
-        return 1
-    }
+    1. Open  https://opensource.samsung.com/uploadList?menuItem=mobile
+    2. Search the device model, e.g.  SM-A536B  (A53), SM-A256E (A25),
+       SM-A336B (A33), SM-M336B (M33), SM-M346B (M34).
+    3. Download the matching "Kernel" open-source package (requires the
+       portal's interactive flow; there is no stable direct URL).
+    4. Unzip it and unpack the inner Kernel.tar.gz into:
+         vendor/samsung/kernel-source/<model>/
+    5. Point the symlink at it:
+         ln -sfn vendor/samsung/kernel-source/<model> \
+                 vendor/samsung/kernel-source/kernel
 
-    ok "Extracted to: $extract_dir"
+  Note: this tarball is Linux 5.10.x. It is the authoritative CAL-IF source to
+  transcribe register/PLL data from, but the git mirrors above are easier to
+  diff against while porting.
 
-    # Find kernel source directory
-    local kernel_dir
-    kernel_dir=$(find "$extract_dir" -maxdepth 3 -name "Makefile" -exec grep -l "EXTRAVERSION.*s5e8825\|EXTRAVERSION.*5.10" {} \; 2>/dev/null | head -1 | xargs dirname 2>/dev/null) || true
-
-    if [[ -n "$kernel_dir" ]]; then
-        ok "Kernel source found: $kernel_dir"
-
-        # Create symlink for easy access
-        ln -sfn "$kernel_dir" "$SAMSUNG_DIR/kernel"
-        ok "Symlinked: $SAMSUNG_DIR/kernel -> $kernel_dir"
-    else
-        warn "Kernel Makefile not found automatically. Check $extract_dir"
-    fi
+EOF
 }
 
 case "$choice" in
-    1) download_source "SM-A536B" ;;
-    2) download_source "SM-A256E" ;;
-    3) download_source "SM-A336B" ;;
-    4) download_source "SM-M336B" ;;
-    5) download_source "SM-M346B" ;;
-    6)
-        for model in SM-A536B SM-A256E SM-A336B SM-M336B SM-M346B; do
-            download_source "$model" || warn "Failed: $model"
-        done
-        ;;
+    1) clone_ref floppy ;;
+    2) clone_ref un1ca ;;
+    3) official_portal ;;
     0) exit 0 ;;
     *) err "Invalid choice"; exit 1 ;;
 esac
-
-echo ""
-ok "Done!"
-echo ""
-echo "  Next steps:"
-echo "    1. Review kernel source in: $SAMSUNG_DIR/"
-echo "    2. Copy needed drivers to vendor/samsung/"
-echo "    3. Port drivers to Linux 6.18 API"
-echo "    4. Build: make build"
-echo ""

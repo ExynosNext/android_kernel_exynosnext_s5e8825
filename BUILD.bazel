@@ -23,42 +23,16 @@ kernel_build(
     base_kernel = "//common:kernel_aarch64",
     defconfig = "gki_defconfig",
     kmi_symbol_list = ":exynosnext_kmi_symbols",
+    # Only modules with real, ported source are listed here. The remaining
+    # subsystems (display, gpu, media, audio, modem, wifi, input, sensors,
+    # battery, fingerprint) are scaffolding under vendor/samsung/ with no source
+    # yet; they are intentionally omitted until ported from the Samsung 5.10
+    # CAL-IF tree. See docs/STATUS.md and docs/PORTING.md.
     modules = [
         "//vendor/samsung/clock:samsung_clk",
-        "//vendor/samsung/display/dpu:samsung_dpu",
-        "//vendor/samsung/display/dsim:samsung_dsim",
-        "//vendor/samsung/display/panel:samsung_panel",
-        "//vendor/samsung/gpu/mali:mali_kbase",
-        "//vendor/samsung/media/mfc:samsung_mfc",
-        "//vendor/samsung/audio/codec:samsung_audio_codec",
-        "//vendor/samsung/audio/amp:samsung_audio_amp",
-        "//vendor/samsung/audio/abox:samsung_abox",
-        "//vendor/samsung/modem/cpif:samsung_cpif",
-        "//vendor/samsung/wifi/scsc:samsung_wifi",
-        "//vendor/samsung/input/touchscreen:samsung_input",
-        "//vendor/samsung/sensors/sensorhub:samsung_sensorhub",
-        "//vendor/samsung/battery/charger:samsung_battery",
-        "//vendor/samsung/fingerprint/egistec:samsung_fingerprint",
     ],
     module_outs = [
         "clk_s5e8825.ko",
-        "samsung_dpu.ko",
-        "samsung_dsim.ko",
-        "samsung_panel.ko",
-        "mali_kbase.ko",
-        "samsung_mfc.ko",
-        "rt5665.ko",
-        "rt5691.ko",
-        "tfa9878.ko",
-        "aw882xx.ko",
-        "samsung_abox.ko",
-        "samsung_cpif.ko",
-        "wlan.ko",
-        "sec_input.ko",
-        "shub.ko",
-        "s2mf301_charger.ko",
-        "hl7132.ko",
-        "etspis.ko",
     ],
 )
 

@@ -1,0 +1,266 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Samsung S2MPS34 PMIC common regulator definitions for Exynos 1280.
+ *
+ * Included by each board DTS inside the pmic@66 node under i2c0. Boards
+ * override individual regulator constraints (min/max microvolt, always-on)
+ * as their schematics require.
+ *
+ * The S2MPS34 exposes 39 LDOs and 9 BUCK regulators. Voltages below are
+ * the Exynos 1280 reference ranges sourced from Samsung's 5.10 BSP.
+ */
+
+regulators {
+	ldo1: LDO1 {
+		regulator-name = "vdd_alive";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		regulator-always-on;
+	};
+	ldo2: LDO2 {
+		regulator-name = "vdd_pmic";
+		regulator-min-microvolt = <1000000>;
+		regulator-max-microvolt = <1000000>;
+		regulator-always-on;
+	};
+	ldo3: LDO3 {
+		regulator-name = "vdd_mmc";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-always-on;
+	};
+	ldo4: LDO4 {
+		regulator-name = "vdd_mmc2";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <3300000>;
+	};
+	ldo5: LDO5 {
+		regulator-name = "vdd_tsp";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+	};
+	ldo6: LDO6 {
+		regulator-name = "vdd_lcd";
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+	};
+	ldo7: LDO7 {
+		regulator-name = "vdd_cam_io";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo8: LDO8 {
+		regulator-name = "vdd_cam_avdd";
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+	};
+	ldo9: LDO9 {
+		regulator-name = "vdd_cam_af";
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+	};
+	ldo10: LDO10 {
+		regulator-name = "vdd_mif";
+		regulator-min-microvolt = <800000>;
+		regulator-max-microvolt = <1100000>;
+		regulator-always-on;
+	};
+	ldo11: LDO11 {
+		regulator-name = "vdd_g3ds";
+		regulator-min-microvolt = <800000>;
+		regulator-max-microvolt = <1100000>;
+	};
+	ldo12: LDO12 {
+		regulator-name = "vdd_cp";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo13: LDO13 {
+		regulator-name = "vdd_buck";
+		regulator-min-microvolt = <800000>;
+		regulator-max-microvolt = <1100000>;
+	};
+	ldo14: LDO14 {
+		regulator-name = "vdd_wifi";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo15: LDO15 {
+		regulator-name = "vdd_bt";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo16: LDO16 {
+		regulator-name = "vdd_ldo16";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo17: LDO17 {
+		regulator-name = "vdd_ldo17";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo18: LDO18 {
+		regulator-name = "vdd_mipi";
+		regulator-min-microvolt = <1000000>;
+		regulator-max-microvolt = <1000000>;
+	};
+	ldo19: LDO19 {
+		regulator-name = "vdd_hsic";
+		regulator-min-microvolt = <1000000>;
+		regulator-max-microvolt = <1000000>;
+	};
+	ldo20: LDO20 {
+		regulator-name = "vdd_ldo20";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo21: LDO21 {
+		regulator-name = "vdd_ldo21";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo22: LDO22 {
+		regulator-name = "vdd_ldo22";
+		regulator-min-microvolt = <800000>;
+		regulator-max-microvolt = <1100000>;
+	};
+	ldo23: LDO23 {
+		regulator-name = "vdd_ldo23";
+		regulator-min-microvolt = <800000>;
+		regulator-max-microvolt = <1100000>;
+	};
+	ldo24: LDO24 {
+		regulator-name = "vdd_ldo24";
+		regulator-min-microvolt = <800000>;
+		regulator-max-microvolt = <1100000>;
+	};
+	ldo25: LDO25 {
+		regulator-name = "vdd_ldo25";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo26: LDO26 {
+		regulator-name = "vdd_ldo26";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo27: LDO27 {
+		regulator-name = "vdd_ldo27";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo28: LDO28 {
+		regulator-name = "vdd_ldo28";
+		regulator-min-microvolt = <3000000>;
+		regulator-max-microvolt = <3000000>;
+	};
+	ldo29: LDO29 {
+		regulator-name = "vdd_ldo29";
+		regulator-min-microvolt = <3000000>;
+		regulator-max-microvolt = <3000000>;
+	};
+	ldo30: LDO30 {
+		regulator-name = "vdd_ldo30";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo31: LDO31 {
+		regulator-name = "vdd_ldo31";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo32: LDO32 {
+		regulator-name = "vdd_ldo32";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo33: LDO33 {
+		regulator-name = "vdd_ldo33";
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+	};
+	ldo34: LDO34 {
+		regulator-name = "vdd_ldo34";
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+	};
+	ldo35: LDO35 {
+		regulator-name = "vdd_ldo35";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo36: LDO36 {
+		regulator-name = "vdd_ldo36";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo37: LDO37 {
+		regulator-name = "vdd_ldo37";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo38: LDO38 {
+		regulator-name = "vdd_ldo38";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+	ldo39: LDO39 {
+		regulator-name = "vdd_ldo39";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+
+	buck1: BUCK1 {
+		regulator-name = "vdd_cpu";
+		regulator-min-microvolt = <500000>;
+		regulator-max-microvolt = <1300000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+	buck2: BUCK2 {
+		regulator-name = "vdd_g3d";
+		regulator-min-microvolt = <500000>;
+		regulator-max-microvolt = <1300000>;
+		regulator-always-on;
+	};
+	buck3: BUCK3 {
+		regulator-name = "vdd_int";
+		regulator-min-microvolt = <500000>;
+		regulator-max-microvolt = <1300000>;
+		regulator-always-on;
+	};
+	buck4: BUCK4 {
+		regulator-name = "vdd_mif";
+		regulator-min-microvolt = <500000>;
+		regulator-max-microvolt = <1300000>;
+		regulator-always-on;
+	};
+	buck5: BUCK5 {
+		regulator-name = "vdd_mem";
+		regulator-min-microvolt = <900000>;
+		regulator-max-microvolt = <1300000>;
+		regulator-always-on;
+	};
+	buck6: BUCK6 {
+		regulator-name = "vdd_kfc";
+		regulator-min-microvolt = <500000>;
+		regulator-max-microvolt = <1300000>;
+		regulator-always-on;
+	};
+	buck7: BUCK7 {
+		regulator-name = "vdd_buck7";
+		regulator-min-microvolt = <1000000>;
+		regulator-max-microvolt = <1000000>;
+	};
+	buck8: BUCK8 {
+		regulator-name = "vdd_ldo_buck8";
+		regulator-min-microvolt = <1000000>;
+		regulator-max-microvolt = <1000000>;
+	};
+	buck9: BUCK9 {
+		regulator-name = "vdd_buck9";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+};

@@ -1,398 +1,172 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Samsung Exynos 1280 - Galaxy A25 5G (SM-A256E)
+ * Samsung Galaxy A25 5G (SM-A256E) Device Tree
  *
- * Copyright (C) 2024 Samsung Electronics Co., Ltd.
+ * Board-level peripherals: PMIC, touch, display panel, fingerprint,
+ * storage.  Addresses and GPIO assignments are PLACEHOLDERS.
  */
 
 /dts-v1/;
 
 #include "exynos1280.dtsi"
+#include "exynos1280-pmic-s2mps34.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/irq.h>
 
 / {
 	model = "Samsung Galaxy A25 5G (SM-A256E)";
-	compatible = "samsung,exynos1280-a25x", "samsung,exynos1280";
+	compatible = "samsung,a25x", "samsung,exynos1280";
 
 	chosen {
-		bootargs = "console=ttyS0,115200n8 androidboot.console=ttyS0";
+		bootargs = "androidboot.hardware=exynos1280";
 	};
 
-	memory@0 {
+	memory@80000000 {
 		device_type = "memory";
-		reg = <0x0 0x0 0x0 0x180000000>;
+		reg = <0x0 0x80000000 0x0 0x180000000>; /* 6 GB */
 	};
 
-	firmware {
-		s2mps34_pmic@66 {
-			compatible = "samsung,s2mps34-pmic";
-			reg = <0x66>;
+	/* ── Fixed regulators ─────────────────────────────────────────── */
 
-			rtc {
-				compatible = "samsung,s2mps34-rtc";
-			};
-
-		 regulators {
-			buck1_reg: buck1 {
-				regulator-name = "vdd_mif";
-				regulator-min-microvolt = <600000>;
-				regulator-max-microvolt = <1100000>;
-				regulator-always-on;
-			};
-
-			buck2_reg: buck2 {
-				regulator-name = "vdd_cpu";
-				regulator-min-microvolt = <575000>;
-				regulator-max-microvolt = <1050000>;
-				regulator-always-on;
-			};
-
-			buck3_reg: buck3 {
-				regulator-name = "vdd_int";
-				regulator-min-microvolt = <500000>;
-				regulator-max-microvolt = <1100000>;
-				regulator-always-on;
-			};
-
-			ldo1_reg: ldo1 {
-				regulator-name = "vdd_aud";
-				regulator-min-microvolt = <1800000>;
-				regulator-max-microvolt = <1800000>;
-			};
-
-			ldo2_reg: ldo2 {
-				regulator-name = "vddio_ap";
-				regulator-min-microvolt = <1800000>;
-				regulator-max-microvolt = <1800000>;
-			};
-
-			ldo3_reg: ldo3 {
-				regulator-name = "vddio_nfc";
-				regulator-min-microvolt = <1800000>;
-				regulator-max-microvolt = <1800000>;
-			};
-
-			ldo4_reg: ldo4 {
-				regulator-name = "vdd_cam";
-				regulator-min-microvolt = <2800000>;
-				regulator-max-microvolt = <2800000>;
-			};
-
-			ldo5_reg: ldo5 {
-				regulator-name = "vdd_touch";
-				regulator-min-microvolt = <2800000>;
-				regulator-max-microvolt = <3300000>;
-			};
-		 };
-		};
+	reg_vdd_emmc: regulator-vdd-emmc {
+		compatible = "regulator-fixed";
+		regulator-name = "vdd_emmc";
+		regulator-min-microvolt = <2900000>;
+		regulator-max-microvolt = <2900000>;
+		regulator-always-on;
 	};
 };
+
+/* ── UART ────────────────────────────────────────────────────────────── */
+
+&serial1 {
+	status = "okay";
+};
+
+/* ── I2C0: PMIC ─────────────────────────────────────────────────────── */
 
 &i2c0 {
 	status = "okay";
 
-	s2mfs01_charger@65 {
-		compatible = "samsung,s2mfs01-charger";
-		reg = <0x65>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&s2mfs01_int>;
-		interrupt-parent = <&gpa2>;
-		interrupts = <5 IRQ_TYPE_LEVEL_LOW>;
-		monitor-voltage = <4200000>;
-		monitor-curr = <2000000>;
-		fuel-gauge-i2c = <&i2c0 0x36>;
-	};
-
-	s2mfs01_fuelgauge@36 {
-		compatible = "samsung,s2mfs01-fuelgauge";
-		reg = <0x36>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&s2mfs01_alert>;
-		interrupt-parent = <&gpa2>;
-		interrupts = <4 IRQ_TYPE_LEVEL_LOW>;
+	s2mps34_pmic: pmic@66 {
+		compatible = "samsung,s2mps34-pmic";
+		reg = <0x66>;
+		/* Full regulator set (39 LDO + 9 BUCK) is provided by the
+		 * included exynos1280-pmic-s2mps34.dtsi. */
 	};
 };
+
+/* ── I2C1: Touchscreen ──────────────────────────────────────────────── */
 
 &i2c1 {
 	status = "okay";
-	pinctrl-names = "default";
-	pinctrl-0 = <&i2c1_bus>;
 
-	goodix@14 {
+	touchscreen@14 {
 		compatible = "goodix,gt9916r";
 		reg = <0x14>;
-		interrupt-parent = <&gpa3>;
-		interrupts = <0 IRQ_TYPE_EDGE_FALLING>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&touch_int>;
-		reset-gpios = <&gpa3 1 GPIO_ACTIVE_LOW>;
-		vdd-supply = <&ldo5_reg>;
-		vddio-supply = <&ldo2_reg>;
-		touchscreen-size-x = <1080>;
-		touchscreen-size-y = <2340>;
+		interrupt-parent = <&gph0>;
+		interrupts = <5 IRQ_TYPE_EDGE_FALLING>;
+		reset-gpios = <&gph0 6 GPIO_ACTIVE_LOW>;
 	};
 };
 
-&i2c6 {
-	status = "okay";
-	pinctrl-names = "default";
-	pinctrl-0 = <&i2c6_bus>;
-
-	gnss@42 {
-		compatible = "samsung,exynos-gnss";
-		reg = <0x42>;
-		interrupt-parent = <&gpa1>;
-		interrupts = <6 IRQ_TYPE_LEVEL_HIGH>;
-		vdd-supply = <&buck1_reg>;
-	};
-};
-
-&spi0 {
-	status = "okay";
-	pinctrl-names = "default";
-	pinctrl-0 = <&spi0_bus>;
-
-	nfc@0 {
-		compatible = "nxp,pn557";
-		reg = <0>;
-		interrupt-parent = <&gpa1>;
-		interrupts = <0 IRQ_TYPE_EDGE_RISING>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&nfc_int>;
-		vcc-supply = <&ldo3_reg>;
-	};
-};
+/* ── SPI1: Fingerprint ──────────────────────────────────────────────── */
 
 &spi1 {
 	status = "okay";
-	pinctrl-names = "default";
-	pinctrl-0 = <&spi1_bus>;
 
 	fingerprint@0 {
-		compatible = "egis,ec6xx";
+		compatible = "egistec,etspis";
 		reg = <0>;
-		interrupt-parent = <&gpa3>;
-		interrupts = <2 IRQ_TYPE_EDGE_RISING>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&fp_int>;
-		vdd-supply = <&ldo1_reg>;
-		spi-max-frequency = <10000000>;
+		spi-max-frequency = <9600000>;
+		interrupt-parent = <&gpi0>;
+		interrupts = <6 IRQ_TYPE_EDGE_FALLING>;
+		reset-gpios = <&gpi0 7 GPIO_ACTIVE_LOW>;
 	};
 };
+
+/* ── Display ─────────────────────────────────────────────────────────── */
 
 &decon {
 	status = "okay";
-
-	dsim0 {
-		status = "okay";
-
-		panel@0 {
-			compatible = "samsung,s6e3fc2x01";
-			reg = <0>;
-			reset-gpios = <&gpa4 3 GPIO_ACTIVE_LOW>;
-			vdd3-supply = <&ldo5_reg>;
-			vci-supply = <&ldo4_reg>;
-			init-sequence = /bits/ 8 <0x11 0x00 0x28 0x00>;
-			width-mm = <68>;
-			height-mm = <142>;
-			orientation;
-
-			display-timings {
-				native-mode = <&timing0>;
-
-				timing0: timing0 {
-					clock-frequency = <140000000>;
-					hactive = <1080>;
-					vactive = <2340>;
-					hfront-porch = <20>;
-					hback-porch = <20>;
-					hsync-len = <4>;
-					vfront-porch = <16>;
-					vback-porch = <16>;
-					vsync-len = <4>;
-				};
-			};
-		};
-	};
-
-	backlight {
-		compatible = "pwm-backlight";
-		power-supply = <&ldo1_reg>;
-		brightness-levels = <0 255>;
-		default-brightness-level = <128>;
-		pwms = <&pwm0 0 1000000>;
-	};
 };
 
-&usbdrd20 {
+&dsim0 {
 	status = "okay";
-	vbus-supply = <&ldo1_reg>;
-	dr_mode = "peripheral";
+
+	panel@0 {
+		compatible = "samsung,s6e3fc2x01";
+		reg = <0>;
+		reset-gpios = <&gpi1 0 GPIO_ACTIVE_LOW>;
+		enable-gpios = <&gpi1 1 GPIO_ACTIVE_HIGH>;
+		vdd-supply = <&ldo6>;
+	};
 };
+
+/* ── eMMC ────────────────────────────────────────────────────────────── */
 
 &sdhci0 {
 	status = "okay";
 	bus-width = <8>;
-	mmc-hs400-1_8v;
-	mmc-hs400-enhanced-strobe;
-	disable-wp;
 	cap-mmc-highspeed;
-	broken-cd;
+	mmc-hs200-1_8v;
+	mmc-hs400-1_8v;
+	non-removable;
+	vmmc-supply = <&reg_vdd_emmc>;
 };
 
+/* ── SD card ─────────────────────────────────────────────────────────── */
+
 &sdhci2 {
-	status = "disabled";
+	status = "okay";
+	bus-width = <4>;
+	cap-sd-highspeed;
+	disable-wp;
 };
+
+/* ── USB ─────────────────────────────────────────────────────────────── */
+
+&usbdrd {
+	status = "okay";
+};
+
+&usbdrd_dwc3 {
+	dr_mode = "peripheral";
+	maximum-speed = "high-speed";
+};
+
+/* ── UFS ─────────────────────────────────────────────────────────────── */
+
+&ufshc {
+	status = "okay";
+};
+
+/* ── GPU ─────────────────────────────────────────────────────────────── */
 
 &gpu {
 	status = "okay";
-	clocks = <&clock CLK_GPU>;
-	clock-names = "core";
 };
+
+/* ── MFC ─────────────────────────────────────────────────────────────── */
 
 &mfc {
 	status = "okay";
 };
 
+/* ── Audio ───────────────────────────────────────────────────────────── */
+
 &i2s0 {
 	status = "okay";
 };
 
-&pinctrl0 {
-	rtc {
-		rtc_int: rtc-int {
-			pins = "gpa1-6";
-			function = "ext_interrupt";
-			bias-pull-up;
-			drive-strength = <0>;
-		};
-	};
+/* ── Modem ───────────────────────────────────────────────────────────── */
 
-	touch {
-		touch_int: touch-int {
-			pins = "gpa3-0";
-			function = "ext_interrupt";
-			bias-pull-up;
-			drive-strength = <0>;
-		};
-	};
+&cpif {
+	status = "okay";
+};
 
-	nfc {
-		nfc_int: nfc-int {
-			pins = "gpa1-0";
-			function = "ext_interrupt";
-			bias-pull-up;
-			drive-strength = <0>;
-		};
-	};
+/* ── NFC ─────────────────────────────────────────────────────────────── */
 
-	fingerprint {
-		fp_int: fp-int {
-			pins = "gpa3-2";
-			function = "ext_interrupt";
-			bias-pull-up;
-			drive-strength = <0>;
-		};
-	};
-
-	charger {
-		s2mfs01_int: s2mfs01-int {
-			pins = "gpa2-5";
-			function = "ext_interrupt";
-			bias-pull-up;
-			drive-strength = <0>;
-		};
-
-		s2mfs01_alert: s2mfs01-alert {
-			pins = "gpa2-4";
-			function = "ext_interrupt";
-			bias-pull-up;
-			drive-strength = <0>;
-		};
-	};
-
-	uart0 {
-		uart0_data: uart0-data {
-			pins = "gpb0-0", "gpb0-1";
-			function = "uart0";
-			drive-strength = <2>;
-			bias-pull-up;
-		};
-
-		uart0_ctrl: uart0-ctrl {
-			pins = "gpb0-2", "gpb0-3";
-			function = "uart0";
-			drive-strength = <2>;
-			bias-pull-up;
-		};
-	};
-
-	i2c0 {
-		i2c0_bus: i2c0-bus {
-			pins = "gpb1-0", "gpb1-1";
-			function = "i2c0";
-			drive-strength = <2>;
-			bias-pull-up;
-		};
-	};
-
-	i2c1 {
-		i2c1_bus: i2c1-bus {
-			pins = "gpb1-2", "gpb1-3";
-			function = "i2c1";
-			drive-strength = <2>;
-			bias-pull-up;
-		};
-	};
-
-	i2c6 {
-		i2c6_bus: i2c6-bus {
-			pins = "gpb2-4", "gpb2-5";
-			function = "i2c6";
-			drive-strength = <2>;
-			bias-pull-up;
-		};
-	};
-
-	spi0 {
-		spi0_bus: spi0-bus {
-			pins = "gpb0-4", "gpb0-5", "gpb0-6", "gpb0-7";
-			function = "spi0";
-			drive-strength = <2>;
-			bias-pull-up;
-		};
-	};
-
-	spi1 {
-		spi1_bus: spi1-bus {
-			pins = "gpb1-4", "gpb1-5", "gpb1-6", "gpb1-7";
-			function = "spi1";
-			drive-strength = <2>;
-			bias-pull-up;
-		};
-	};
-
-	sdmmc0 {
-		sd0_clk: sd0-clk {
-			pins = "gpc0-0";
-			function = "sd0_clk";
-			drive-strength = <2>;
-			bias-pull-up;
-		};
-
-		sd0_cmd: sd0-cmd {
-			pins = "gpc0-1";
-			function = "sd0_cmd";
-			drive-strength = <2>;
-			bias-pull-up;
-		};
-
-		sd0_bus: sd0-bus {
-			pins = "gpc0-2", "gpc0-3", "gpc0-4",
-			       "gpc0-5", "gpc0-6", "gpc0-7",
-			       "gpc0-8", "gpc0-9";
-			function = "sd0_bus";
-			drive-strength = <2>;
-			bias-pull-up;
-		};
-	};
+&nfc {
+	status = "okay";
 };

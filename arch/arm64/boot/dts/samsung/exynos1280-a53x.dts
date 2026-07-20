@@ -1,428 +1,108 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Samsung Galaxy A53 5G (SM-A536B) Device Tree
- * ExynosNext Kernel — Linux 6.18 LTS
  *
- * Based on Samsung kernel source a53x DTS.
- * All peripherals defined: display, touch, WiFi, audio, battery,
- * fingerprint, NFC, camera, USB, charging.
+ * Board-level peripherals: PMIC, touch, display panel, fingerprint,
+ * storage.  Addresses and GPIO assignments are PLACEHOLDERS.
  */
 
 /dts-v1/;
 
 #include "exynos1280.dtsi"
+#include "exynos1280-pmic-s2mps34.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/irq.h>
 
 / {
 	model = "Samsung Galaxy A53 5G (SM-A536B)";
-	compatible = "samsung,exynos1280-a53x", "samsung,exynos1280";
+	compatible = "samsung,a53x", "samsung,exynos1280";
 
 	chosen {
-		bootargs = "androidboot.hardware=exynos1280 "
-			   "androidboot.fstab_version=2 "
-			   "androidboot.serialno=RF8R90XXXXX "
-			   "androidboot.bootdevice=13D20000.ufshc";
+		bootargs = "androidboot.hardware=exynos1280";
 	};
 
-	firmware-name = "samsung/multidigest.bin";
-	firmware-loader { };
-
-	/* ── Memory Configuration ─────────────────────────────────────────── */
 	memory@80000000 {
-		reg = <0x0 0x80000000 0x0 0x80000000>; /* 2GB */
+		device_type = "memory";
+		reg = <0x0 0x80000000 0x0 0x180000000>; /* 6 GB */
 	};
 
-	/* ── Board-specific regulators ────────────────────────────────────── */
-	regulators {
-		compatible = "simple-bus";
+	/* ── Fixed regulators ─────────────────────────────────────────── */
 
-		vdd_mmc0: regulator-vdd-mmc0 {
-			compatible = "regulator-fixed";
-			regulator-name = "vdd_mmc0";
-			regulator-min-microvolt = <2900000>;
-			regulator-max-microvolt = <2900000>;
-			regulator-always-on;
-		};
-
-		vddq_mmc0: regulator-vddq-mmc0 {
-			compatible = "regulator-fixed";
-			regulator-name = "vddq_mmc0";
-			regulator-min-microvolt = <1800000>;
-			regulator-max-microvolt = <1800000>;
-			regulator-always-on;
-		};
-	};
-
-	/* ── Display ──────────────────────────────────────────────────────── */
-	backlight: backlight {
-		compatible = "pwm-backlight";
-		brightness-levels = <0 1 2 3 4 5 6 7 8 9 10
-				     11 12 13 14 15 16 17 18 19 20
-				     21 22 23 24 25 26 27 28 29 30
-				     31 32 33 34 35 36 37 38 39 40
-				     41 42 43 44 45 46 47 48 49 50
-				     51 52 53 54 55 56 57 58 59 60
-				     61 62 63 64 65 66 67 68 69 70
-				     71 72 73 74 75 76 77 78 79 80
-				     81 82 83 84 85 86 87 88 89 90
-				     91 92 93 94 95 96 97 98 99 100
-				     101 102 103 104 105 106 107 108 109 110
-				     111 112 113 114 115 116 117 118 119 120
-				     121 122 123 124 125 126 127 128 129 130
-				     131 132 133 134 135 136 137 138 139 140
-				     141 142 143 144 145 146 147 148 149 150
-				     151 152 153 154 155 156 157 158 159 160
-				     161 162 163 164 165 166 167 168 169 170
-				     171 172 173 174 175 176 177 178 179 180
-				     181 182 183 184 185 186 187 188 189 190
-				     191 192 193 194 195 196 197 198 199 200
-				     201 202 203 204 205 206 207 208 209 210
-				     211 212 213 214 215 216 217 218 219 220
-				     221 222 223 224 225 226 227 228 229 230
-				     231 232 233 234 235 236 237 238 239 240
-				     241 242 243 244 245 246 247 248 249 250
-				     251 252 253 254 255>;
-		default-brightness-level = <102>;
-		power-supply = <&ldo10>;
-	};
-
-	/* ── Touch Key LEDs ───────────────────────────────────────────────── */
-	touchkey {
-		compatible = "samsung,sec-touchkey";
-		linux,name = "sec_touchkey";
+	reg_vdd_emmc: regulator-vdd-emmc {
+		compatible = "regulator-fixed";
+		regulator-name = "vdd_emmc";
+		regulator-min-microvolt = <2900000>;
+		regulator-max-microvolt = <2900000>;
+		regulator-always-on;
 	};
 };
 
-/* ── UART1 (BT) ──────────────────────────────────────────────────────── */
+/* ── UART ────────────────────────────────────────────────────────────── */
+
 &serial1 {
 	status = "okay";
-	bluetooth {
-		compatible = "samsung,exynos1280-bt";
-		vddio-supply = <&ldo10>;
-		vddrf-supply = <&ldo15>;
-		vddbt-supply = <&ldo16>;
-		pinctrl-names = "default";
-		host-wake-gpio = <&gpg0 2 GPIO_ACTIVE_LOW>;
-		android-bt;
-	};
 };
 
-/* ── I2C Bus Configuration ───────────────────────────────────────────── */
+/* ── I2C0: PMIC ─────────────────────────────────────────────────────── */
 
-/* I2C0: PMIC S2MPS34 */
 &i2c0 {
 	status = "okay";
-	clock-frequency = <1000000>;
 
-	s2mps34_pm@66 {
+	s2mps34_pmic: pmic@66 {
 		compatible = "samsung,s2mps34-pmic";
 		reg = <0x66>;
-		interrupt-parent = <&gic>;
-		interrupts = <GIC_SPI 19 IRQ_TYPE_NONE>;
-
-		regulators {
-			ldo1: LDO1 {
-				regulator-name = "vdd_alive";
-				regulator-min-microvolt = <1800000>;
-				regulator-max-microvolt = <1800000>;
-				regulator-always-on;
-			};
-
-			ldo2: LDO2 {
-				regulator-name = "vddq_mmc2";
-				regulator-min-microvolt = <1800000>;
-				regulator-max-microvolt = <2800000>;
-			};
-
-			ldo3: LDO3 {
-				regulator-name = "vdd_mmc0";
-				regulator-min-microvolt = <2800000>;
-				regulator-max-microvolt = <2800000>;
-			};
-
-			ldo4: LDO4 {
-				regulator-name = "vddio_ap";
-				regulator-min-microvolt = <1800000>;
-				regulator-max-microvolt = <1800000>;
-				regulator-always-on;
-			};
-
-			ldo5: LDO5 {
-				regulator-name = "vdd_tsp";
-				regulator-min-microvolt = <3300000>;
-				regulator-max-microvolt = <3300000>;
-			};
-
-			ldo6: LDO6 {
-				regulator-name = "vdd_lcd";
-				regulator-min-microvolt = <2800000>;
-				regulator-max-microvolt = <2800000>;
-			};
-
-			ldo7: LDO7 {
-				regulator-name = "vdd_cam";
-				regulator-min-microvolt = <2800000>;
-				regulator-max-microvolt = <2800000>;
-			};
-
-			ldo8: LDO8 {
-				regulator-name = "vdd_mipi";
-				regulator-min-microvolt = <1000000>;
-				regulator-max-microvolt = <1000000>;
-			};
-
-			ldo9: LDO9 {
-				regulator-name = "vdd_uaudio";
-				regulator-min-microvolt = <1800000>;
-				regulator-max-microvolt = <1800000>;
-			};
-
-			ldo10: LDO10 {
-				regulator-name = "vdd_io";
-				regulator-min-microvolt = <1800000>;
-				regulator-max-microvolt = <1800000>;
-				regulator-always-on;
-			};
-
-			ldo11: LDO11 {
-				regulator-name = "vdd_sensor";
-				regulator-min-microvolt = <1800000>;
-				regulator-max-microvolt = <1800000>;
-			};
-
-			ldo12: LDO12 {
-				regulator-name = "vdd_nfc";
-				regulator-min-microvolt = <1800000>;
-				regulator-max-microvolt = <1800000>;
-			};
-
-			ldo13: LDO13 {
-				regulator-name = "vdd_gps";
-				regulator-min-microvolt = <1200000>;
-				regulator-max-microvolt = <1200000>;
-			};
-
-			ldo14: LDO14 {
-				regulator-name = "vdd_peri";
-				regulator-min-microvolt = <1800000>;
-				regulator-max-microvolt = <1800000>;
-			};
-
-			ldo15: LDO15 {
-				regulator-name = "vdd_rf0";
-				regulator-min-microvolt = <1300000>;
-				regulator-max-microvolt = <1300000>;
-			};
-
-			ldo16: LDO16 {
-				regulator-name = "vdd_bt";
-				regulator-min-microvolt = <1300000>;
-				regulator-max-microvolt = <1300000>;
-			};
-
-			ldo17: LDO17 {
-				regulator-name = "vdd_modem";
-				regulator-min-microvolt = <880000>;
-				regulator-max-microvolt = <880000>;
-			};
-
-			buck1: BUCK1 {
-				regulator-name = "vdd_cpu";
-				regulator-min-microvolt = <750000>;
-				regulator-max-microvolt = <1100000>;
-				regulator-always-on;
-				regulator-boot-on;
-			};
-
-			buck2: BUCK2 {
-				regulator-name = "vdd_g3d";
-				regulator-min-microvolt = <500000>;
-				regulator-max-microvolt = <1000000>;
-				regulator-always-on;
-			};
-
-			buck3: BUCK3 {
-				regulator-name = "vdd_mif";
-				regulator-min-microvolt = <500000>;
-				regulator-max-microvolt = <1050000>;
-				regulator-always-on;
-			};
-
-			buck4: BUCK4 {
-				regulator-name = "vdd_aud";
-				regulator-min-microvolt = <1500000>;
-				regulator-max-microvolt = <1500000>;
-			};
-
-			buck5: BUCK5 {
-				regulator-name = "vdd_cp";
-				regulator-min-microvolt = <880000>;
-				regulator-max-microvolt = <880000>;
-			};
-
-			buck6: BUCK6 {
-				regulator-name = "vdd_cam_act";
-				regulator-min-microvolt = <500000>;
-				regulator-max-microvolt = <1200000>;
-			};
-		};
-	};
-
-	/* Charger IC S2MFS01 */
-	s2mfs01_charger@64 {
-		compatible = "samsung,s2mfs01-charger";
-		reg = <0x64>;
-		pinctrl-names = "default";
-		usb_data: data-udc {
-			pins = "GPJ3-0";
-			function = "udc";
-			output-low;
-		};
-	};
-
-	/* Fuel Gauge S2MFS01 */
-	s2mfs01_fg@55 {
-		compatible = "samsung,s2mfs01-fuelgauge";
-		reg = <0x55>;
+		/* Full regulator set (39 LDO + 9 BUCK) is provided by the
+		 * included exynos1280-pmic-s2mps34.dtsi. Board-specific
+		 * constraints are applied by overriding individual regulators
+		 * here. */
 	};
 };
 
-/* I2C1: Touchscreen Goodix GT9916R */
+/* ── I2C1: Touchscreen ──────────────────────────────────────────────── */
+
 &i2c1 {
 	status = "okay";
-	clock-frequency = <400000>;
 
-	goodix_ts@14 {
+	touchscreen@14 {
 		compatible = "goodix,gt9916r";
 		reg = <0x14>;
 		interrupt-parent = <&gph0>;
 		interrupts = <5 IRQ_TYPE_EDGE_FALLING>;
 		reset-gpios = <&gph0 6 GPIO_ACTIVE_LOW>;
-		pinctrl-names = "default";
-		touchscreen-max-x = <1079>;
-		touchscreen-max-y = <2339>;
-		touchscreen-size-x = <1080>;
-		touchscreen-size-y = <2340>;
-		touchscreen-max-p = <2048>;
-		irq-gpio = <&gph0 5 GPIO_ACTIVE_LOW>;
-		fw-name = "goodix_a53x";
 	};
 };
 
-/* I2C2: Touchscreen FocalTech FT3658 */
-&i2c2 {
-	status = "okay";
-	clock-frequency = <400000>;
+/* ── SPI1: Fingerprint ──────────────────────────────────────────────── */
 
-	ft5x06@38 {
-		compatible = "focaltech,fts";
-		reg = <0x38>;
-		interrupt-parent = <&gph0>;
-		interrupts = <7 IRQ_TYPE_EDGE_FALLING>;
-		reset-gpios = <&gph0 8 GPIO_ACTIVE_LOW>;
-		pinctrl-names = "default";
-		touchscreen-max-x = <1079>;
-		touchscreen-max-y = <2339>;
-		focaltech,panel-id = <0x01 0x82 0x50>;
-	};
-};
-
-/* I2C3: Proximity/Light Sensor */
-&i2c3 {
-	status = "okay";
-	clock-frequency = <400000>;
-
-	/* SX9380 Near/Far sensor */
-	sx9380@28 {
-		compatible = "semtech,sx9380";
-		reg = <0x28>;
-		interrupt-parent = <&gpf0>;
-		interrupts = <3 IRQ_TYPE_EDGE_FALLING>;
-		pinctrl-names = "default";
-	};
-};
-
-/* I2C4: NPU/ISP related */
-&i2c4 {
-	status = "okay";
-};
-
-/* I2C5: Audio codec (secondary I2S) */
-&i2c5 {
-	status = "okay";
-};
-
-/* I2C6: GNSS */
-&i2c6 {
-	status = "okay";
-};
-
-/* I2C7: Additional sensor hub */
-&i2c7 {
-	status = "okay";
-};
-
-/* ── SPI Bus Configuration ───────────────────────────────────────────── */
-
-/* SPI0: NFC */
-&spi0 {
-	status = "okay";
-	pinctrl-0 = <&spi0_bus_cs0>;
-
-	nfc@0 {
-		compatible = "nxp,nxpnci";
-		reg = <0>;
-		spi-max-frequency = <10000000>;
-		interrupt-parent = <&gic>;
-		interrupts = <GIC_SPI 295 IRQ_TYPE_EDGE_FALLING>;
-		reset-gpios = <&gpi0 4 GPIO_ACTIVE_LOW>;
-		enable-gpios = <&gpi0 5 GPIO_ACTIVE_HIGH>;
-	};
-};
-
-/* SPI1: Fingerprint */
 &spi1 {
 	status = "okay";
 
-	egistec@0 {
-		compatible = "etekis,etspis";
+	fingerprint@0 {
+		compatible = "egistec,etspis";
 		reg = <0>;
 		spi-max-frequency = <9600000>;
 		interrupt-parent = <&gpi0>;
 		interrupts = <6 IRQ_TYPE_EDGE_FALLING>;
 		reset-gpios = <&gpi0 7 GPIO_ACTIVE_LOW>;
-		pinctrl-names = "default";
 	};
 };
 
-/* ── USB ─────────────────────────────────────────────────────────────── */
+/* ── Display ─────────────────────────────────────────────────────────── */
 
-&usbdrd20 {
-	status = "okay";
-	vbus-supply = <&ldo8>;
-};
-
-&usb2phy {
+&decon {
 	status = "okay";
 };
 
-&usbdrd_dwc3 {
+&dsim0 {
 	status = "okay";
-	dr_mode = "peripheral";
-maximum-speed = "high-speed";
-};
 
-/* ── UFS ─────────────────────────────────────────────────────────────── */
-
-.ufshc {
-	status = "okay";
-	fmp-support;
-	sec-config;
-	vcc-supply = <&ldo1>;
-	vccq-supply = <&ldo4>;
-	vccq2-supply = <&ldo4>;
-};
-
-.ufshc.ufs-phy {
-	status = "okay";
+	panel@0 {
+		compatible = "samsung,ams646ya01";
+		reg = <0>;
+		reset-gpios = <&gpi1 0 GPIO_ACTIVE_LOW>;
+		enable-gpios = <&gpi1 1 GPIO_ACTIVE_HIGH>;
+		vdd-supply = <&ldo6>;
+	};
 };
 
 /* ── eMMC ────────────────────────────────────────────────────────────── */
@@ -430,72 +110,36 @@ maximum-speed = "high-speed";
 &sdhci0 {
 	status = "okay";
 	bus-width = <8>;
-	mmc-ddr-1_8v;
+	cap-mmc-highspeed;
 	mmc-hs200-1_8v;
 	mmc-hs400-1_8v;
-	mmc-hs400-enhanced-strobe;
-	vmmc-supply = <&vdd_mmc0>;
-	vqmmc-supply = <&vddq_mmc0>;
+	non-removable;
+	vmmc-supply = <&reg_vdd_emmc>;
 };
 
-/* ── SD Card ─────────────────────────────────────────────────────────── */
+/* ── SD card ─────────────────────────────────────────────────────────── */
 
 &sdhci2 {
 	status = "okay";
 	bus-width = <4>;
 	cap-sd-highspeed;
 	disable-wp;
-	pinctrl-0 = <&sd2_bus &sd2_clk &sd2_cmd>;
 };
 
-/* ── Display (DSI Panel) ─────────────────────────────────────────────── */
+/* ── USB ─────────────────────────────────────────────────────────────── */
 
-&decon {
-	status = "okay";
-
-	dsim0 {
-		status = "okay";
-
-		panel@0 {
-			compatible = "samsung,ams646ya01";
-			reg = <0>;
-			reset-gpios = <&gpi1 0 GPIO_ACTIVE_LOW>;
-			enable-gpios = <&gpi1 1 GPIO_ACTIVE_HIGH>;
-			pinctrl-names = "default";
-		 backlight = <&backlight>;
-			samsung,display-mode = <1080 2340 144>;
-			samsung,mipi-lane-count = <4>;
-			samsung,phy-lane-mask = <0xf>;
-			samsung,phy-ref-clk = <26000000>;
-			samsung,esc-clk = <20000000>;
-			samsung,dsim-lcd-enabled;
-			status = "okay";
-		};
-	};
-};
-
-&mipi_dsim_phy {
+&usbdrd {
 	status = "okay";
 };
 
-/* ── Camera (MIPI CSI-2) ─────────────────────────────────────────────── */
-
-&csis0 {
-	status = "okay";
-	phy-names = "csi2";
-	phys = <&csi2_phy>;
-
-	port {
-		csis0_ep: endpoint {
-			remote-endpoint = <&imx258_ep>;
-			data-lanes = <0 1 2 3>;
-			clock-lanes = <4>;
-			clock-frequency = <300000000>;
-		};
-	};
+&usbdrd_dwc3 {
+	dr_mode = "peripheral";
+	maximum-speed = "high-speed";
 };
 
-&csi2_phy {
+/* ── UFS ─────────────────────────────────────────────────────────────── */
+
+&ufshc {
 	status = "okay";
 };
 
@@ -503,7 +147,6 @@ maximum-speed = "high-speed";
 
 &gpu {
 	status = "okay";
-	gpu-model = "mali-g78-mc2";
 };
 
 /* ── MFC ─────────────────────────────────────────────────────────────── */
@@ -516,28 +159,9 @@ maximum-speed = "high-speed";
 
 &i2s0 {
 	status = "okay";
-	pinctrl-names = "default";
-};
-
-&slimbus0 {
-	status = "okay";
-
-	codec@0 {
-		compatible = "maxim,max98357a";
-		reg = <0x0>;
-	};
-
-	codec@1 {
-		compatible = "realtek,rt5665";
-		reg = <0x1a>;
-	};
 };
 
 /* ── Modem ───────────────────────────────────────────────────────────── */
-
-&cpdma {
-	status = "okay";
-};
 
 &cpif {
 	status = "okay";
@@ -547,90 +171,4 @@ maximum-speed = "high-speed";
 
 &nfc {
 	status = "okay";
-	vdd-supply = <&ldo12>;
-};
-
-/* ── Pinctrl Assignments ─────────────────────────────────────────────── */
-
-&pinctrl0 {
-	uart0_data: uart0-data {
-		pins = "GPA0-0", "GPA0-1";
-		function = "uart0";
-	};
-
-	uart0_flow_cts: uart0-flow-cts {
-		pins = "GPA0-2", "GPA0-3";
-		function = "uart0";
-	};
-
-	uart2_data: uart2-data {
-		pins = "GPA1-0", "GPA1-1";
-		function = "uart2";
-	};
-
-	uart2_pm: uart2-pm {
-		pins = "GPA1-2", "GPA1-3";
-		function = "gpio";
-		drive-strength = <8>;
-	};
-};
-
-&pinctrl1 {
-	i2c0_bus: i2c0-bus {
-		pins = "GPB0-0", "GPB0-1";
-		function = "i2c0";
-		drive-strength = <0>;
-	};
-
-	i2c1_bus: i2c1-bus {
-		pins = "GPB1-0", "GPB1-1";
-		function = "i2c1";
-		drive-strength = <0>;
-	};
-
-	i2c2_bus: i2c2-bus {
-		pins = "GPB2-0", "GPB2-1";
-		function = "i2c2";
-		drive-strength = <0>;
-	};
-};
-
-&pinctrl3 {
-	spi0_bus_cs0: spi0-bus-cs0 {
-		pins = "GPD0-0", "GPD0-1", "GPD0-2", "GPD0-3";
-		function = "spi0";
-	};
-
-	spi1_bus: spi1-bus {
-		pins = "GPD1-0", "GPD1-1", "GPD1-2", "GPD1-3";
-		function = "spi1";
-	};
-};
-
-&pinctrl4 {
-	sd2_bus: sd2-bus {
-		pins = "GPE0-0", "GPE0-1", "GPE0-2", "GPE0-3";
-		function = "sd2";
-	};
-
-	sd2_clk: sd2-clk {
-		pins = "GPE1-0";
-		function = "sd2";
-	};
-
-	sd2_cmd: sd2-cmd {
-		pins = "GPE1-1";
-		function = "sd2";
-	};
-};
-
-&thermal-zones {
-	cluster0-thermal {
-		cooling-maps {
-			map0 {
-				trip = <&trip0>;
-				cooling-device = <&cpu0 0 3>;
-			};
-		};
-	};
 };

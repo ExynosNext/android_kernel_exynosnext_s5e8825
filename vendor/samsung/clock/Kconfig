@@ -1,5 +1,10 @@
 config COMMON_CLK_S5E8825
 	tristate "Samsung Exynos 1280 Clock Controller"
-	depends on ARCH_EXYNOS
+	depends on COMMON_CLK
+	depends on OF || COMPILE_TEST
+	default m if OF
 	help
-	  Samsung Exynos 1280 clock controller driver.
+	  Clock controller driver for Samsung Exynos 1280 (s5e8825) SoC.
+	  Uses the generic clk-provider API for GKI module compatibility.
+	  Builds as a loadable module (.ko) against the android17-6.18 GKI
+	  tree.

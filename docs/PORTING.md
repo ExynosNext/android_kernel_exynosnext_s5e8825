@@ -67,13 +67,14 @@ Modules must be ported in this order due to hardware and software dependencies. 
 - Needs a `clk-s5e8825.h` header defining all clock IDs as an enum.
 
 **Checklist:**
-- [ ] Extract PLL register maps and configuration from Samsung source
-- [ ] Create clock ID enum header (`clk-s5e8825.h`)
-- [ ] Map CAL-IF calls to `samsung_clk_register_mux()` / `_div()` / `_gate()` / `_plln()`
-- [ ] Write DT bindings for clock controller node
-- [ ] Define fixed-rate clocks (XUSBXTI, etc.)
+- [x] Extract PLL register maps and configuration from Samsung source (partial)
+- [x] Create clock ID enum header (`clk-s5e8825.h`)
+- [x] Map CAL-IF calls to `clk_hw_register_mux()` / `_div()` / `_gate()` / `_factor()`
+- [x] Write DT bindings for clock controller node
+- [x] Define fixed-rate clocks (XUSBXTI, etc.)
 - [ ] Test all PLL locks and clock gate toggling
 - [ ] Verify clock rates against Samsung firmware logs
+- [ ] Replace fixed-factor PLL stubs with real `PLL_CON0` register programming
 
 ---
 

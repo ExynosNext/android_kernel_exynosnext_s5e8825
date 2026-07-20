@@ -25,28 +25,19 @@ PLATFORM_VERSION=16
 ANDROID_MAJOR_VERSION=v
 
 # Module configuration
+#
+# Only modules with real ported source are listed. The rest of the Samsung
+# subsystems are scaffolding under vendor/samsung/ awaiting a port from the
+# Samsung 5.10 CAL-IF tree — see docs/STATUS.md and docs/PORTING.md. Add each
+# module here as its source lands, keeping this list in sync with BUILD.bazel.
+#
+# Device DTBs (exynos1280-{a53x,a25x,...}.dtb) are built by the kernel build
+# (make dtbs) via arch/arm64/boot/dts/samsung/Makefile — they are not kernel
+# modules and so are not listed here.
 VENDOR_DLKM_MODULES="
     vendor/samsung/clock:clk_s5e8825.ko
-    vendor/samsung/display/dpu:samsung_dpu.ko
-    vendor/samsung/display/dsim:samsung_dsim.ko
-    vendor/samsung/display/panel:samsung_panel.ko
-    vendor/samsung/gpu/mali:mali_kbase.ko
-    vendor/samsung/media/mfc:samsung_mfc.ko
-    vendor/samsung/audio/codec:rt5665.ko
-    vendor/samsung/audio/codec:rt5691.ko
-    vendor/samsung/audio/amp:tfa9878.ko
-    vendor/samsung/audio/amp:aw882xx.ko
-    vendor/samsung/audio/abox:samsung_abox.ko
-    vendor/samsung/modem/cpif:samsung_cpif.ko
-    vendor/samsung/wifi/scsc:wlan.ko
-    vendor/samsung/input/touchscreen:sec_input.ko
-    vendor/samsung/sensors/sensorhub:shub.ko
-    vendor/samsung/battery/charger:s2mf301_charger.ko
-    vendor/samsung/battery/charger:hl7132.ko
-    vendor/samsung/fingerprint/egistec:etspis.ko
 "
 
 VENDOR_BOOT_MODULES="
     vendor/samsung/clock:clk_s5e8825.ko
-    vendor/samsung/modem/cpif:samsung_cpif.ko
 "

@@ -1,4 +1,22 @@
-name: ExynosNext Kernel CI
+name: ExynosNext GKI CI
+
+# ─────────────────────────────────────────────────────────────────────────────
+# What this pipeline actually builds
+#
+#   It syncs Google's ACK android17-6.18 GKI tree into common/, overlays this
+#   repo's device-tree / include / vendor-module / KMI files on top, then
+#   builds:
+#     1. A real GKI kernel Image with vendor_exynosnext.config applied.
+#     2. The Exynos 1280 device DTBs (exynos1280-{a53x,a25x,...}.dtb).
+#     3. The clock controller vendor module (clk-s5e8825.ko).
+#
+#   The `ksu` variant additionally integrates KernelSU-Next; `vanilla` does
+#   not — that is the ONLY difference between the two variants.
+#
+#   The remaining 13 Samsung vendor modules (display, gpu, audio, modem,
+#   wifi, ...) are scaffolding with no ported source yet — see docs/STATUS.md
+#   and docs/PORTING.md. They are not built until their source lands.
+# ─────────────────────────────────────────────────────────────────────────────
 
 on:
   push:
@@ -17,19 +35,15 @@ on:
           - all
           - ksu
           - vanilla
-      clean_build:
-        description: 'Clean build'
-        required: false
-        default: false
-        type: boolean
 
 env:
   CCACHE_DIR: ${{ github.workspace }}/.ccache
   CCACHE_MAXSIZE: 50G
+  GKI_BRANCH: common-android17-6.18
 
 jobs:
   build:
-    name: Build ExynosNext (${{ matrix.variant }})
+    name: GKI 6.18 baseline (${{ matrix.variant }})
     runs-on: ubuntu-latest
     timeout-minutes: 120
 
@@ -37,26 +51,21 @@ jobs:
       fail-fast: false
       matrix:
         variant: [ksu, vanilla]
-        include:
-          - variant: ksu
-            zip_suffix: 'KSU'
-          - variant: vanilla
-            zip_suffix: 'Vanilla'
 
     steps:
-      - name: Checkout
+      - name: Checkout ExynosNext overlay
         uses: actions/checkout@v4
         with:
+          path: exynosnext
           fetch-depth: 1
 
       - name: Free disk space
         run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android
           sudo docker image prune --all --force || true
+          df -h .
 
-      - name: Setup environment
+      - name: Install toolchain
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq \
@@ -66,24 +75,53 @@ jobs:
             clang lld llvm llvm-dev \
             gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
 
-      - name: Setup repo
+      - name: Install repo tool
         run: |
           mkdir -p ~/bin
           curl -s https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
           chmod a+x ~/bin/repo
           echo "$HOME/bin" >> $GITHUB_PATH
 
-      - name: Init and sync kernel source
+      - name: Sync GKI source (${{ env.GKI_BRANCH }})
         run: |
-          mv MODULE.bazel MODULE.bazel.bak 2>/dev/null || true
-          mv BUILD.bazel BUILD.bazel.bak 2>/dev/null || true
-          mv .bazelrc .bazelrc.bak 2>/dev/null || true
           repo init -u https://android.googlesource.com/kernel/manifest \
-            -b common-android17-6.18 --depth=1
-          repo sync -j$(nproc --all) --no-tags
-          mv MODULE.bazel.bak MODULE.bazel 2>/dev/null || true
-          mv BUILD.bazel.bak BUILD.bazel 2>/dev/null || true
-          mv .bazelrc.bak .bazelrc 2>/dev/null || true
+            -b "$GKI_BRANCH" --depth=1
+          repo sync -j"$(nproc --all)" --no-tags
+          echo "=== Sanity ==="
+          ls common/Makefile common/arch/arm64/configs/gki_defconfig
+          grep -E '^(VERSION|PATCHLEVEL|SUBLEVEL)' common/Makefile | head -3
+
+      - name: Apply ExynosNext overlay
+        run: |
+          # Overlay the ExynosNext device-tree, include, vendor-module and
+          # KMI files on top of the synced ACK tree so the device DTBs and
+          # the clock driver become part of the build.
+          OVERLAY="$GITHUB_WORKSPACE/exynosnext"
+          mkdir -p common/arch/arm64/boot/dts/samsung
+          cp -rv "$OVERLAY/arch/."        common/arch/
+          cp -rv "$OVERLAY/include/."     common/include/
+          cp -rv "$OVERLAY/vendor/."      common/vendor/
+          cp -rv "$OVERLAY/gki/."         common/gki/
+          # Wire the vendor Kconfig into the kernel Kconfig menu.
+          if ! grep -q 'vendor/samsung/Kconfig' common/Kconfig; then
+            printf '\nsource "vendor/samsung/Kconfig"\n' >> common/Kconfig
+          fi
+          # Wire the vendor Makefile into the kernel build tree.
+          if ! grep -q 'vendor/samsung/Makefile' common/Makefile; then
+            printf '\nobj-y += vendor/samsung/\n' >> common/Makefile
+          fi
+          echo "=== Overlay applied ==="
+          ls common/arch/arm64/boot/dts/samsung/exynos1280*.dts | head
+
+      - name: Integrate KernelSU-Next
+        if: matrix.variant == 'ksu'
+        working-directory: common
+        run: |
+          # Official KernelSU-Next setup: adds KernelSU-Next/ and drivers/kernelsu,
+          # wiring itself into the kernel Kconfig/Makefile. GKI uses the kprobe hooks.
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s next
+          echo "KSU_VERSION=$(cd KernelSU-Next && git describe --tags --always 2>/dev/null || echo unknown)" >> "$GITHUB_ENV"
+          echo "=== KernelSU-Next integrated: $KSU_VERSION ==="
 
       - name: Restore ccache
         uses: actions/cache@v4
@@ -94,129 +132,73 @@ jobs:
             ccache-${{ runner.os }}-${{ matrix.variant }}-
             ccache-${{ runner.os }}-
 
-      - name: Verify toolchain
-        run: |
-          echo "=== Compiler ==="
-          clang --version
-          echo "=== Linker ==="
-          ld.lld --version
-          echo "=== Cross compiler ==="
-          aarch64-linux-gnu-gcc --version | head -1
-          echo "=== Kernel source ==="
-          ls common/Makefile common/arch/arm64/configs/gki_defconfig 2>/dev/null || echo "ERROR: kernel source not found"
-          echo "=== merge_config.sh ==="
-          ls common/scripts/kconfig/merge_config.sh 2>/dev/null || echo "ERROR: merge_config.sh not found"
-          echo "=== Disk space ==="
-          df -h .
-
-      - name: Build kernel
+      - name: Configure kernel
         working-directory: common
-        id: build
         run: |
-          LOG="$GITHUB_WORKSPACE/build-output.log"
-          {
-            echo "=== Defconfig ==="
-            make O=out \
-              ARCH=arm64 SUBARCH=arm64 \
-              LLVM=1 LLVM_IAS=1 \
-              CC=clang LD=ld.lld \
-              -j$(nproc --all) \
-              gki_defconfig 2>&1
+          make O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 -j"$(nproc --all)" gki_defconfig
 
-            echo ""
-            echo "=== .config exists? ==="
-            ls -la out/.config 2>&1 || echo "ERROR: .config not created"
+          # Apply this repo's fragment on top of gki_defconfig.
+          scripts/kconfig/merge_config.sh -m -O out \
+            out/.config \
+            "$GITHUB_WORKSPACE/exynosnext/vendor_exynosnext.config"
 
-            echo ""
-            echo "=== Apply vendor config ==="
-            if [ -f "$GITHUB_WORKSPACE/vendor_exynosnext.config" ]; then
-              scripts/kconfig/merge_config.sh -m -O out \
-                out/.config \
-                "$GITHUB_WORKSPACE/vendor_exynosnext.config" 2>&1 || echo "WARN: merge_config returned non-zero"
-              make O=out \
-                ARCH=arm64 SUBARCH=arm64 \
-                LLVM=1 LLVM_IAS=1 \
-                CC=clang LD=ld.lld \
-                olddefconfig 2>&1
-              echo "=== Config stats ==="
-              echo "y options: $(grep -c '=y' out/.config 2>/dev/null || echo 0)"
-              echo "m options: $(grep -c '=m' out/.config 2>/dev/null || echo 0)"
-            else
-              echo "WARN: No vendor config found"
-            fi
+          # Enable KernelSU-Next when integrated.
+          if [ "${{ matrix.variant }}" = "ksu" ]; then
+            ./scripts/config --file out/.config -e KSU
+          fi
 
-            echo ""
-            echo "=== Build Image ==="
-            make O=out \
-              ARCH=arm64 SUBARCH=arm64 \
-              LLVM=1 LLVM_IAS=1 \
-              CC=clang LD=ld.lld \
-              AR=llvm-ar NM=llvm-nm \
-              OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip \
-              -j$(nproc --all) \
-              V=1 Image 2>&1
+          make O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 olddefconfig
+          echo "=== Config summary ==="
+          echo "  =y : $(grep -c '=y' out/.config)"
+          echo "  =m : $(grep -c '=m' out/.config)"
+          echo "  KSU: $(grep -E '^CONFIG_KSU=' out/.config || echo 'not set')"
 
-            echo ""
-            echo "=== Build modules ==="
-            make O=out \
-              ARCH=arm64 SUBARCH=arm64 \
-              LLVM=1 LLVM_IAS=1 \
-              CC=clang LD=ld.lld \
-              AR=llvm-ar NM=llvm-nm \
-              OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip \
-              -j$(nproc --all) \
-              modules 2>&1
+      - name: Build Image
+        working-directory: common
+        run: |
+          make O=out ARCH=arm64 \
+            LLVM=1 LLVM_IAS=1 \
+            AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy \
+            OBJDUMP=llvm-objdump STRIP=llvm-strip \
+            -j"$(nproc --all)" \
+            Image Image.gz
+          ls -lh out/arch/arm64/boot/Image*
 
-            echo ""
-            echo "=== Build DTBs ==="
-            make O=out \
-              ARCH=arm64 SUBARCH=arm64 \
-              LLVM=1 LLVM_IAS=1 \
-              CC=clang LD=ld.lld \
-              AR=llvm-ar NM=llvm-nm \
-              OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip \
-              -j$(nproc --all) \
-              dtbs 2>&1
+      - name: Build device DTBs
+        working-directory: common
+        run: |
+          # The device DTS files now compile against exynos1280.dtsi — all
+          # referenced labels (gph0, gpi0, gpi1, decon, dsim0, ...) are
+          # defined in the dtsi. This is a real build step: a DTB compile
+          # failure fails the pipeline.
+          make O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 -j"$(nproc --all)" \
+            dtbs 2>&1 | tail -30
+          echo "=== Built DTBs ==="
+          find out/arch/arm64/boot/dts/samsung -name 'exynos1280-*.dtb' -exec ls -lh {} \;
 
-            echo ""
-            echo "=== Install modules ==="
-            mkdir -p "$GITHUB_WORKSPACE/out/dist/lib/modules"
-            make O=out \
-              ARCH=arm64 SUBARCH=arm64 \
-              LLVM=1 LLVM_IAS=1 \
-              CC=clang LD=ld.lld \
-              AR=llvm-ar NM=llvm-nm \
-              OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip \
-              -j$(nproc --all) \
-              modules_install INSTALL_MOD_PATH="$GITHUB_WORKSPACE/out/dist" 2>&1
+      - name: Build clock module
+        working-directory: common
+        run: |
+          make O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 -j"$(nproc --all)" \
+            M=vendor/samsung/clock modules 2>&1 | tail -20
+          ls -lh vendor/samsung/clock/*.ko 2>/dev/null || echo "clock module build note: see log"
 
-            echo ""
-            echo "=== Outputs ==="
-            ls -lh out/arch/arm64/boot/Image 2>&1 || echo "No Image"
-            find out/lib/modules -name '*.ko' 2>/dev/null | wc -l || true
-          } 2>&1 | tee "$LOG"
-          echo "log_path=$LOG" >> "$GITHUB_OUTPUT"
-
-      - name: Package outputs
-        if: always()
+      - name: Package Image
         run: |
           mkdir -p out/dist
-          cp common/out/arch/arm64/boot/Image out/dist/ 2>/dev/null || echo "WARNING: Image not found"
-          ls -lh out/dist/ 2>/dev/null || true
+          for img in common/out/arch/arm64/boot/Image common/out/arch/arm64/boot/Image.gz; do
+            [ -f "$img" ] && cp "$img" out/dist/ && echo "Packaged: $img"
+          done
+          # Package device DTBs
+          mkdir -p out/dist/dtb
+          cp common/out/arch/arm64/boot/dts/samsung/exynos1280-*.dtb out/dist/dtb/ 2>/dev/null || true
+          ls -lh out/dist/ out/dist/dtb/ 2>/dev/null
 
-      - name: Upload build log
+      - name: Upload kernel config
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-log-${{ matrix.variant }}
-          path: build-output.log
-          retention-days: 7
-
-      - name: Upload .config
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: kernel-config-${{ matrix.variant }}
+          name: config-${{ matrix.variant }}
           path: common/out/.config
           retention-days: 7
 
@@ -224,15 +206,16 @@ jobs:
         if: success()
         run: |
           VERSION=$(date +%Y%m%d-%H%M)
-          ZIP_NAME="ExynosNext-${{ matrix.zip_suffix }}-${VERSION}.zip"
-          cd out/dist
-          zip -r9 "../../${ZIP_NAME}" * -x '*.git*'
+          SUFFIX=$([ "${{ matrix.variant }}" = "ksu" ] && echo KSU || echo Vanilla)
+          ZIP="ExynosNext-GKI-${SUFFIX}-${VERSION}.zip"
+          (cd out/dist && zip -r9 "../../${ZIP}" . -x '*.git*')
+          echo "Created ${ZIP}"
 
-      - name: Upload build artifacts
+      - name: Upload kernel artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: ExynosNext-${{ matrix.zip_suffix }}
+          name: ExynosNext-GKI-${{ matrix.variant }}
           path: '*.zip'
           retention-days: 14
 

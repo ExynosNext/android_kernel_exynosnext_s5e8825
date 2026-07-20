@@ -1,8 +1,9 @@
+/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause) */
 /*
- * Samsung Exynos 1280 (s5e8825) Clock Bindings
- * Device Tree clock ID definitions
+ * Samsung Exynos 1280 (s5e8825) — clock ID definitions
  *
- * This header provides clock ID constants for use in DT nodes.
+ * Single source of truth for clock IDs used by both the DT and the
+ * clock controller driver.
  */
 
 #ifndef _DT_BINDINGS_CLK_SAMSUNG_EXYNOS1280_H
@@ -22,22 +23,18 @@
 #define CLK_MOUT_VPLL		13
 #define CLK_MOUT_CPU		14
 #define CLK_MOUT_BUS		15
-#define CLK_MOUT_DISPLAY	16
-#define CLK_MOUT_MEDIA		17
 
 /* DIV clocks */
 #define CLK_DIV_CPU		30
 #define CLK_DIV_BUS		31
 #define CLK_DIV_D0_MIPI		32
 #define CLK_DIV_A2M		33
-#define CLK_DIV_UART		34
 
 /* CPU clocks */
-#define CLK_CPU			50
 #define CLK_CPU_ACLK		51
 #define CLK_CPU_PCLK		52
 
-/* Bus clocks */
+/* Bus / peri clocks */
 #define CLK_ACLK_BUS		60
 #define CLK_PCLK_BUS		61
 #define CLK_ACLK_PERI		62
@@ -52,6 +49,7 @@
 #define CLK_SCLK_DECON0		75
 #define CLK_ACLK_DSIM0		76
 #define CLK_SCLK_MIPI_TX	77
+#define CLK_ACLK_DMA_A		78
 
 /* Camera clocks */
 #define CLK_ACLK_CAM		80
@@ -63,11 +61,14 @@
 /* MFC clocks */
 #define CLK_ACLK_MFC		90
 #define CLK_ACLK_MFC_NOCS	91
+#define CLK_PCLK_MFC		92
 
 /* GPU clocks */
 #define CLK_ACLK_GPU		100
 #define CLK_ACLK_GPU_NOCS	101
 #define CLK_SCLK_GPU		102
+#define CLK_SCLK_GPU_NOCS	103
+#define CLK_CLK_GPU		104
 
 /* Audio clocks */
 #define CLK_ACLK_AUD		110
@@ -115,6 +116,7 @@
 
 /* UFS clocks */
 #define CLK_ACLK_UFS		160
+#define CLK_ACLK_UFS_NOCS	161
 #define CLK_SCLK_UFS		162
 
 /* MMC clocks */
@@ -125,19 +127,25 @@
 
 /* USB clocks */
 #define CLK_ACLK_USB		180
+#define CLK_ACLK_USB_NOCS	181
 #define CLK_SCLK_USB		182
 
 /* Modem clocks */
 #define CLK_ACLK_MODEM		190
+#define CLK_ACLK_MODEM_NOCS	191
 
-/* Other clocks */
+/* Misc peripherals */
 #define CLK_PCLK_NFC		200
 #define CLK_ACLK_PWM		210
 #define CLK_PCLK_ADCIF		220
 #define CLK_OSC_RTC		230
+
+/* DMA clocks */
 #define CLK_ACLK_DMAC0		240
 #define CLK_ACLK_DMAC1		241
 #define CLK_PCLK_DMAC1		242
+
+/* TMU / WDT */
 #define CLK_PCLK_TMU		250
 #define CLK_PCLK_WDT		251
 

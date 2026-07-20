@@ -50,7 +50,7 @@
 ### Clock Controller
 | File | Purpose |
 |------|---------|
-| `vendor/samsung/clock/clk-s5e8825.c` | Clock controller driver (samsung_clk API) |
+| `vendor/samsung/clock/clk-s5e8825.c` | Clock controller driver (generic clk-provider API) |
 | `vendor/samsung/clock/clk-s5e8825.h` | Clock ID definitions |
 | `include/dt-bindings/clock/samsung,exynos1280-clk.h` | DTS clock bindings |
 
@@ -88,7 +88,7 @@
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Kernel version | GKI android17-6.18 (Linux 6.18 LTS) | Samsung ACK base |
-| Clock controller | `samsung_clk` API | Standard upstream Samsung clock framework |
+| Clock controller | Generic `clk-provider` API | GKI-compatible; real register data from CAL-IF still needed |
 | Build system | Kleaf/Bazel | GKI requirement, DDK module support |
 | Root solution | KernelSU Next | Primary root method for user builds |
 | Module format | Loadable kernel modules (`.ko`) | GKI compatibility |
@@ -98,12 +98,21 @@
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Clock controller | **Skeleton** | samsung_clk API, needs real register data |
-| Vendor modules | **Not started** | Samsung source required |
-| Device trees | **Complete** | Skeleton with all hardware nodes |
-| Build system | **Complete** | Kleaf/Bazel fully configured |
-| CI/CD | **Complete** | GitHub Actions with KSU + Vanilla |
+| GKI core kernel | **Builds** | CI syncs ACK android17-6.18, overlays this repo, builds real `Image` |
+| Clock controller | **Partially ported** | Multi-CMU (9 regions), ~80 gates with real CAL-IF offsets + bit 21 enable; real PLL names; CPU mux (`CLK_MOUT_CPU`) registered; PLL rate tables still fixed-factor placeholders |
+| KMI symbol list | **Complete** | All symbols used by the clock driver are present |
+| Device trees | **Compile** | dtsi (60+ nodes) + 7 board DTS files; DTB targets enabled in Makefile; CI builds `dtbs`; all phandle references resolve |
+| CPU topology | **Correct** | 8 cores (2×Cortex-A78 + 6×Cortex-A55) with `cpu-map` |
+| Vendor modules (13) | **Not started** | Empty scaffolding; Samsung 5.10 source must be ported |
+| Build system (Bazel) | **Untested** | Kleaf files present but CI uses make-based GKI build |
+| CI/CD | **GKI + DTBs + clock module** | Builds GKI Image + DTBs + `clk_s5e8825.ko`; KSU variant integrates KernelSU-Next via `setup.sh` |
 | Flash tool | **Complete** | Interactive TUI |
+
+> Reality check: no booting kernel exists for Exynos 1280 on any 6.x tree. The
+> only proven source is Samsung's Linux **5.10.260** + CAL-IF. This project is a
+> from-scratch 6.18 GKI bring-up; treat everything above "GKI core" as work in
+> progress. Linux 7.1.4 cannot be used because mainline has no Exynos 1280 SoC
+> support at all. See `docs/STATUS.md`.
 
 ## Important Constraints
 
@@ -111,7 +120,12 @@
 - **Samsung source**: Required for actual driver code (`scripts/get-samsung-source.sh`)
 - **KMI**: Vendor modules must only use exported symbols from `gki/aarch64/symbols/exynosnext`
 - **Clock controller**: Must be ported first; blocks all other modules
-- **CAL-IF**: Samsung's proprietary clock framework; must be rewritten as `samsung_clk`
+- **CAL-IF**: Samsung's 5.10 clock framework (`soc/samsung/cal-if` + cmucal). It
+  cannot ship as a GKI `.ko` (its core symbols are not module-exported), so the
+  clock driver here uses the generic exported `clk-provider` API instead. Real
+  register/PLL data must still be transcribed from the CAL-IF source.
+- **Kernel version**: Samsung ships only 5.10 for this SoC; the 6.18 target is an
+  unproven bring-up, not a repackage. Do not assume vendor drivers load as-is.
 
 ## Common Tasks
 
@@ -151,7 +165,7 @@ tools/bazel run //:exynosnext_dist
 
 ## Code Conventions
 
-- **Clock controllers**: Use `samsung_clk_*` API (not CAL-IF)
+- **Clock controllers**: Use generic `clk-provider` API (`clk_hw_register_*`, not CAL-IF)
 - **Code style**: Follow upstream kernel style; run `scripts/checkpatch.pl`
 - **Modules**: All must have `MODULE_LICENSE("GPL v2")`
 - **DTS**: Use standard `dt-bindings/` headers for bindings

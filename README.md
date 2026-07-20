@@ -1,26 +1,44 @@
 # ExynosNext Kernel
 
-A modern Linux 6.18 LTS kernel for Samsung Exynos 1280 (s5e8825) devices,
-built on Android Common Kernel (ACK) with Samsung vendor module support.
+A from-scratch **Linux 6.18 GKI** bring-up for Samsung Exynos 1280 (s5e8825)
+devices, built on Android Common Kernel (ACK) with Samsung vendor module support.
 
-## Supported Devices
+> ⚠️ **Early bring-up — does not boot on any device yet.** Samsung ships only
+> Linux 5.10 + CAL-IF for this SoC; targeting 6.18 GKI means porting the SoC
+> support code from scratch. Today the GKI core kernel builds, the clock driver
+> compiles as a skeleton, and the 7 device DTBs compile — but the 13 remaining
+> vendor modules are not functional. Read **[docs/STATUS.md](docs/STATUS.md)**
+> for the real state before expecting a flashable kernel.
 
-| Device | Codename | Status |
-|--------|----------|--------|
-| Galaxy A53 5G | a53x | Primary target |
-| Galaxy A25 | a25x | Supported |
-| Galaxy A26 | a26xs | Supported |
-| Galaxy A33 | a33x | Supported |
-| Galaxy M33 | m33x | Supported |
-| Galaxy M34 | m34x | Supported |
-| Galaxy Tab S6 Lite 2024 | gta4xls | Supported |
+> ℹ️ **Why not Linux 7.1.4?** Linux 7.1.4 is the latest stable mainline
+> release, but it cannot boot on Exynos 1280: mainline has no SoC support for
+> s5e8825 whatsoever. Android ACK is built on LTS kernels only; there is no
+> GKI branch based on 7.x. The 6.18 LTS base is the newest kernel this project
+> can realistically target.
+
+## Target Devices
+
+Bring-up is focused on the A53 first; the others share the SoC and will follow
+once the common bring-up works. None boot yet — see `docs/STATUS.md`.
+
+| Device | Codename | Bring-up target |
+|--------|----------|-----------------|
+| Galaxy A53 5G | a53x | Primary |
+| Galaxy A25 | a25x | Planned |
+| Galaxy A26 | a26xs | Planned |
+| Galaxy A33 | a33x | Planned |
+| Galaxy M33 | m33x | Planned |
+| Galaxy M34 | m34x | Planned |
+| Galaxy Tab S6 Lite 2024 | gta4xls | Planned |
 
 ## Architecture
 
-- **Base:** Android Common Kernel `android17-6.18` (Linux 6.18 LTS)
-- **Vendor modules:** Samsung BSP drivers ported from Android 16 source
-- **Root:** KernelSU Next (built-in)
-- **Build system:** Kleaf (Bazel) + DDK
+- **Base:** Android Common Kernel `android17-6.18` (Linux 6.18 GKI)
+- **Vendor modules:** Samsung BSP drivers to be ported from the Linux **5.10**
+  CAL-IF source (in progress — only the clock skeleton exists today)
+- **Root:** KernelSU-Next, integrated by CI into the `ksu` variant
+- **Build system:** CI uses a make-based GKI build; Kleaf (Bazel) files exist but
+  are not yet exercised
 
 ## Building
 
