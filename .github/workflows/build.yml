@@ -206,10 +206,19 @@ jobs:
       - name: Build Image
         working-directory: common
         run: |
+          # For KSU variants, pass the KSU include directory via KCFLAGS so
+          # the compiler finds klog.h and uapi/app_profile.h. The Kbuild's
+          # own ccflags-y doesn't propagate reliably through the symlink.
+          KSU_CFLAGS=""
+          if echo "${{ matrix.variant }}" | grep -q ksu; then
+            KSU_DIR="$(realpath KernelSU-Next/kernel)"
+            KSU_CFLAGS="KCFLAGS=-I${KSU_DIR} -I${KSU_DIR}/include"
+          fi
           make O=out ARCH=arm64 \
             LLVM=1 LLVM_IAS=1 \
             AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy \
             OBJDUMP=llvm-objdump STRIP=llvm-strip \
+            $KSU_CFLAGS \
             -j"$(nproc --all)" \
             Image Image.gz
           ls -lh out/arch/arm64/boot/Image*
