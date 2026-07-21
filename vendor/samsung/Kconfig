@@ -1,5 +1,6 @@
 menu "Samsung Exynos 1280 Vendor Modules"
 
+source "vendor/samsung/soc/acpm/Kconfig"
 source "vendor/samsung/clock/Kconfig"
 source "vendor/samsung/display/Kconfig"
 source "vendor/samsung/gpu/Kconfig"

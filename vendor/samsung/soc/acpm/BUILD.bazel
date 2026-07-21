@@ -1,0 +1,11 @@
+load("//build/kernel/kleaf:kernel.bzl", "kernel_module")
+
+kernel_module(
+    name = "exynos_acpm",
+    srcs = glob([
+        "*.c",
+        "*.h",
+    ]),
+    kernel_build = "//common:kernel_aarch64",
+    visibility = ["//visibility:public"],
+)

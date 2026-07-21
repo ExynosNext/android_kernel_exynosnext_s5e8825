@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: GPL-2.0
+
+config EXYNOS_ACPM
+	tristate "Samsung Exynos ACPM IPC driver"
+	depends on OF
+	select EXYNOS_ACPM_FRAMEWORK
+	default y
+	help
+	  This enables the ACPM (Audio Co-Processor Manager) IPC framework
+	  for Samsung Exynos SoCs. The ACPM co-processor manages clocks,
+	  DVFS, PMIC regulators, and thermal on behalf of the AP.
+
+	  The clock controller, devfreq, thermal, and PMIC drivers all
+	  depend on this framework to communicate with the ACPM.
+
+	  Build as a built-in (y) — the ACPM must be available early
+	  in boot before any clock/DVFS operations.
+
+config EXYNOS_ACPM_FRAMEWORK
+	bool
+	help
+	  Internal config to track ACPM framework dependency.
+
+config EXYNOS_ACPM_S2D
+	tristate "Samsung Exynos ACPM S2D (Silent to Dram) support"
+	depends on EXYNOS_ACPM
+	default y
+	help
+	  S2D (Silent to Dram) plugin for the ACPM. Captures debug
+	  information to DRAM on system crashes.

@@ -765,6 +765,26 @@
 		};
 
 		/* â”€â”€ ACPM MFD bus â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+		/* ACPM IPC: the framework that drives clocks/DVFS/PMIC/thermal */
+		acpm_ipc: acpm-ipc {
+			compatible = "samsung,exynos-acpm-ipc";
+			#address-cells = <2>;
+			#size-cells = <1>;
+			interrupts = <GIC_SPI 0x1d IRQ_TYPE_LEVEL_HIGH>;
+			reg = <0x0 0x11900000 0x1000>,
+			      <0x0 0x02039000 0x34800>;
+			initdata-base = <0x8000>;
+			num-channels = <16>;
+			num-timestamps = <32>;
+			debug-log-level = <0>;
+			logging-period = <500>;
+			dump-base = <0x0203d000>;
+			dump-size = <0x30800>;
+			board-id = <0x10>;
+			board-rev = <0x0>;
+			interrupt-ch = <0>;
+		};
+
 		acpm_mfd_bus0: acpm-mfd-bus@11a00000 {
 			compatible = "samsung,exynos-acpm-mfd-bus";
 			status = "okay";

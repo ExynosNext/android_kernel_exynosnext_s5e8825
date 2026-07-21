@@ -228,3 +228,13 @@ of_property_read_bool
 of_get_named_gpio
 of_get_child_by_name
 of_find_compatible_node
+
+# ── ACPM IPC Framework ────────────────────────────────────────────
+acpm_ipc_request_channel
+acpm_ipc_release_channel
+acpm_ipc_send_data
+acpm_ipc_send_data_sync
+acpm_ipc_set_ch_mode
+is_acpm_ipc_busy
+acpm_get_peri_timer
+exynos_acpm_set_fast_switch
