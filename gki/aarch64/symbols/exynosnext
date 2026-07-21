@@ -238,3 +238,13 @@ acpm_ipc_set_ch_mode
 is_acpm_ipc_busy
 acpm_get_peri_timer
 exynos_acpm_set_fast_switch
+
+# ── Pinctrl / GPIO ─────────────────────────────────────────────────
+devm_pinctrl_register
+devm_gpiochip_add_data
+gpiochip_add_pin_range
+pinconf_generic_dt_node_to_map_pin
+pinctrl_utils_free_map
+pinconf_to_config_param
+pinconf_to_config_argument
+pinconf_to_config_packed

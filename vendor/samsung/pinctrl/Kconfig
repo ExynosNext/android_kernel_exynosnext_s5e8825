@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: GPL-2.0
+
+config PINCTRL_S5E8825
+	tristate "Samsung Exynos 1280 pinctrl driver"
+	depends on OF
+	select PINMUX
+	select PINCONF
+	select GENERIC_PINCONF
+	select GPIOLIB
+	select GPIOLIB_IRQCHIP
+	default y
+	help
+	  Pinctrl and GPIO driver for Samsung Exynos 1280 (s5e8825).
+	  Uses standard Linux pinctrl/pinmux/pinconf subsystems and the
+	  generic GPIO chip interface — fully mainline-compatible.
+
+	  Supports 7 pinctrl controllers with 48 GPIO banks total, covering
+	  alive, peri, fsys, core, and audio domains.
+
+	  The driver registers pin configurations (function select, pull
+	  up/down, drive strength) via the standard pinconf-generic
+	  framework, making it compatible with standard DT bindings like:
+	    pinctrl-0 = <&uart0_bus>;
+	    samsung,pins = "gpa0-0", "gpa0-1";
+	    samsung,pin-function = <2>;
+	    samsung,pin-pud = <3>;
