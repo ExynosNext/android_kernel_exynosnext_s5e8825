@@ -1,11 +1,11 @@
-# ExynosNext KMI Symbol List
+﻿# ExynosNext KMI Symbol List
 # Kernel symbols exported for Samsung vendor modules
 # Format: one symbol per line
 #
 # This list defines the stable ABI between the GKI kernel and vendor modules.
 # Only symbols listed here are available to vendor .ko files.
 
-# ── Clock Framework ────────────────────────────────────────────────
+# â”€â”€ Clock Framework â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 clk_hw_register
 clk_hw_unregister
 clk_hw_get_rate
@@ -29,6 +29,7 @@ devm_clk_get_prepared
 devm_clk_hw_register
 devm_clk_hw_register_fixed_rate
 clk_hw_register_fixed_rate
+__clk_hw_register_fixed_rate
 clk_register_fixed_rate
 clk_hw_register_mux
 clk_hw_register_divider
@@ -43,7 +44,7 @@ of_clk_src_onecell_get
 __clk_get_name
 clk_get_parent
 
-# ── Regulator Framework ────────────────────────────────────────────
+# â”€â”€ Regulator Framework â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 regulator_get
 regulator_put
 regulator_enable
@@ -63,9 +64,7 @@ devm_regulator_get
 devm_regulator_get_optional
 devm_regulator_register
 
-# ── Platform Driver ────────────────────────────────────────────────
-platform_driver_register
-platform_driver_unregister
+# â”€â”€ Platform Driver â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 platform_device_register
 platform_device_unregister
 platform_device_add_data
@@ -78,7 +77,7 @@ devm_platform_get_irq_optional
 of_match_device
 of_match_node
 
-# ── DMA ────────────────────────────────────────────────────────────
+# â”€â”€ DMA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 dma_map_single
 dma_unmap_single
 dma_map_sg
@@ -88,7 +87,7 @@ dma_free_coherent
 dma_set_mask_and_coherent
 dma_get_required_mask
 
-# ── GPIO (Legacy bridge) ───────────────────────────────────────────
+# â”€â”€ GPIO (Legacy bridge) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 gpio_request
 gpio_free
 gpio_direction_output
@@ -99,7 +98,7 @@ gpio_to_irq
 gpiochip_add_data
 gpiochip_remove
 
-# ── Pinctrl ────────────────────────────────────────────────────────
+# â”€â”€ Pinctrl â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 pinctrl_get
 pinctrl_put
 pinctrl_lookup_state
@@ -108,7 +107,7 @@ devm_pinctrl_get
 pinctrl_register
 pinctrl_unregister
 
-# ── I2C ────────────────────────────────────────────────────────────
+# â”€â”€ I2C â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 i2c_adapter
 i2c_transfer
 i2c_master_send
@@ -122,7 +121,7 @@ i2c_smbus_write_word_data
 devm_i2c_new_device
 of_find_i2c_adapter_by_node
 
-# ── SPI ────────────────────────────────────────────────────────────
+# â”€â”€ SPI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 spi_register_driver
 spi_unregister_driver
 spi_sync
@@ -132,7 +131,7 @@ spi_write_then_read
 devm_spi_get
 spi_get_device_id
 
-# ── Input Subsystem ────────────────────────────────────────────────
+# â”€â”€ Input Subsystem â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 input_allocate_device
 input_free_device
 input_register_device
@@ -144,7 +143,7 @@ input_report_key
 input_sync
 input_event
 
-# ── IRQ ────────────────────────────────────────────────────────────
+# â”€â”€ IRQ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 devm_request_threaded_irq
 devm_request_irq
 free_irq
@@ -154,7 +153,7 @@ disable_irq_nosync
 irq_set_irq_type
 irq_set_irq_wake
 
-# ── Timer ──────────────────────────────────────────────────────────
+# â”€â”€ Timer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 timer_setup
 mod_timer
 del_timer
@@ -163,7 +162,7 @@ jiffies
 msecs_to_jiffies
 usecs_to_jiffies
 
-# ── Workqueue ──────────────────────────────────────────────────────
+# â”€â”€ Workqueue â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 INIT_WORK
 INIT_DELAYED_WORK
 queue_work
@@ -176,22 +175,23 @@ create_workqueue
 destroy_workqueue
 create_singlethread_workqueue
 
-# ── Completion ─────────────────────────────────────────────────────
+# â”€â”€ Completion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 init_completion
 wait_for_completion
 wait_for_completion_timeout
 complete
 reinit_completion
 
-# ── Firmware ───────────────────────────────────────────────────────
+# â”€â”€ Firmware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 request_firmware
 release_firmware
 request_firmware_nowait
 firmware_request_nowait
 
-# ── Misc ───────────────────────────────────────────────────────────
+# â”€â”€ Misc â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 dev_err
 dev_warn
+_dev_warn
 dev_info
 dev_dbg
 dev_notice
@@ -203,6 +203,7 @@ kmalloc
 krealloc
 kvfree
 devm_kzalloc
+devm_kmalloc
 devm_kfree
 devm_ioremap_resource
 platform_get_resource
@@ -210,7 +211,7 @@ platform_get_resource_byname
 platform_set_drvdata
 platform_get_drvdata
 module_platform_driver
-copy_from_user
+__copy_from_user
 copy_to_user
 get_user
 put_user
