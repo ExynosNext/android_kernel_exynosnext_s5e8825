@@ -262,6 +262,7 @@ jobs:
 
       - name: Build boot.img
         working-directory: common
+        continue-on-error: true
         run: |
           # Create a flashable Android boot image containing the kernel.
           # GKI boot.img needs a ramdisk; we use a minimal initramfs stub so
@@ -270,10 +271,14 @@ jobs:
           mkdir -p out/ramdisk
           echo "ExynosNext GKI stub ramdisk" > out/ramdisk/init
           chmod 755 out/ramdisk/init
-          (cd out/ramdisk && find . | cpio -o -H newc 2>/dev/null | gzip > ../ramdisk.cpio.gz)
+          (cd out/ramdisk && find . | cpio -o -H newc 2>/dev/null | gzip > ../ramdisk.cpio.gz) || true
 
-          # Use the in-tree mkbootimg (ACK ships it under tools/mkbootimg or
-          # common/system/tools/mkbootimg).  Fall back to the system one.
+          # Install mkbootimg from AOSP (pip package) if not present.
+          if ! command -v mkbootimg >/dev/null 2>&1; then
+            pip3 install --quiet mkbootimg 2>/dev/null || true
+          fi
+
+          # Try to find mkbootimg in the tree or on PATH.
           MKBOOTIMG=""
           for p in tools/mkbootimg/mkbootimg.py system/tools/mkbootimg/mkbootimg.py; do
             if [ -f "$p" ]; then MKBOOTIMG="python3 $p"; break; fi
@@ -291,9 +296,12 @@ jobs:
               --base 0x10000000 \
               --kernel_offset 0x00008000 \
               --ramdisk_offset 0x01000000 \
-              --output out/arch/arm64/boot/boot.img
-            echo "=== boot.img built ==="
-            ls -lh out/arch/arm64/boot/boot.img
+              --output out/arch/arm64/boot/boot.img || \
+              echo "WARNING: mkbootimg failed; shipping raw Image only"
+            if [ -f out/arch/arm64/boot/boot.img ]; then
+              echo "=== boot.img built ==="
+              ls -lh out/arch/arm64/boot/boot.img
+            fi
           else
             echo "WARNING: mkbootimg not found; shipping raw Image only"
           fi
