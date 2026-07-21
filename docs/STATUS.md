@@ -1,10 +1,32 @@
 # ExynosNext — Honest Project Status
 
-_Last reviewed: 2026-07-20 (post real-DT audit)_
+_Last reviewed: 2026-07-21 (CI fully green for all 4 variants)_
 
 This file is the source of truth for what actually works. If a claim elsewhere in
 the repo conflicts with this file, this file is right and the other should be
 fixed.
+
+## 🎉 CI is fully green
+
+All four build variants now pass CI on every push:
+
+| Variant | Build time | Status |
+|---------|-----------|--------|
+| `vanilla` | ~35 min | ✅ |
+| `ksu` | ~30 min | ✅ |
+| `vanilla-oneui` | ~45 min | ✅ |
+| `ksu-oneui` | ~41 min | ✅ |
+
+Each variant produces a flashable bundle artifact (~30 MB) containing:
+- `Image` — raw kernel image
+- `Image.gz` — gzip-compressed kernel
+- `dtb/*.dtb` — 7 device tree blobs (exynos1280-*.dtb)
+- `boot.img` — Android boot image (when mkbootimg is available)
+- `kernel.config` — the .config used
+- `README.txt` — flashing instructions
+
+KSU variants additionally include a working KernelSU-Next integration
+(compiled into the kernel, not as a separate module).
 
 ## The one thing to understand first
 
@@ -89,21 +111,24 @@ label scheme (`uart0`/`hsi2c0`/`ufs`/`dwmmc2`/`decon`/`dsim0`/`gpu`/`abox`/
 | Area | State | Notes |
 |------|-------|-------|
 | GKI 6.18 core build | ✅ builds | CI syncs ACK android17-6.18, overlays this repo, builds real `Image` |
+| CI (all 4 variants) | ✅ green | vanilla, ksu, vanilla-oneui, ksu-oneui all pass; ~30-45 min each |
+| Flashable bundle | ✅ packaged | Image + Image.gz + boot.img + 7 DTBs + kernel.config + README |
 | `vendor_exynosnext.config` | ✅ applied | Full feature set: CPUIdle/DVFS, thermal, USB OTG, UFS, encryption, crypto, BPF, etc. |
-| KernelSU-Next (KSU variant) | ✅ integrated in CI | Real `setup.sh` integration |
-| Clock driver | 🟡 compiles, **incomplete** | Generic `clk-provider` API; **real Samsung clocks use ACPM IPC** — this driver cannot actually program them. Needs ACPM mailbox porting. |
-| KMI symbol list | ✅ complete | All symbols used by the clock driver are present |
-| Device DTBs | ✅ compile | 7 board DTBs; **all addresses now match Samsung's real DT**; all phandle references resolve |
-| CPU topology | ✅ correct | 8 cores (6×Ananke/A55 + 2×Hercules/A78) with `cpu-map`, OPP tables, idle-states |
+| `oneui.config` | ✅ applied | Samsung vendor hooks, SELinux develop mode, binderfs for `*-oneui` variants |
+| KernelSU-Next (KSU variants) | ✅ compiles | Manual dev-branch clone; real directory copy (not symlink); sepolicy.c patched for ACK 6.18 |
+| Device DTBs | ✅ compile | 7 board DTBs; **all addresses match Samsung's real DT**; no warnings |
 | GIC | ✅ correct | `arm,gic-400` (GICv2) at `0x12b00000` — was wrongly GICv3 before |
 | MCT timer | ✅ present | `samsung,exynos4210-mct` at `0x10050000` — was missing before |
+| CPU topology | ✅ correct | 8 cores (6×Ananke/A55 + 2×Hercules/A78) with `cpu-map` |
 | Real DT reference | ✅ included | `docs/reference-a53-real.dts` — full 137-node decoded Samsung DT |
 | Flash tool / scripts | ✅ usable | Interactive TUI |
+| GitHub Actions | ✅ Node 24 | checkout@v7, cache@v6, upload-artifact@v7 |
 
 ## What does NOT work yet
 
 | Area | State | Blocker |
 |------|-------|---------|
+| Clock module (.ko) | ⚠️ disabled | The module uses internal kernel symbols (`__platform_driver_register`, `__clk_hw_register_fixed_rate`, `devm_kmalloc`, `_dev_warn`) that are NOT exported in GKI. Building it requires porting ACPM first (then the driver can use ACPM IPC instead of direct registers). Source remains in `vendor/samsung/clock/`. |
 | ACPM mailbox driver | ❌ not ported | **This is THE blocker.** Samsung clocks are driven via ACPM IPC, not direct register writes. Without the ACPM mailbox driver + firmware, no clock can be programmed. |
 | 13 vendor modules | ❌ no source | display, gpu, media, audio, modem, wifi, input, sensors, battery, fingerprint are empty scaffolds |
 | PMIC / pinctrl / regulators | ❌ not ported | S2MPS34 driver + exynos pinctrl driver must be ported from 5.10 |
