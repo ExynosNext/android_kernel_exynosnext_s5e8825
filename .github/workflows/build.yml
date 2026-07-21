@@ -52,7 +52,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        variant: [vanilla, ksu, vanilla-oneui, ksu-oneui]
+        # Build matrix covers every ROM + root combination a user might need:
+        #   aosp-noroot   — AOSP ROMs, no root (pure GKI)
+        #   aosp-ksu      — AOSP ROMs + KernelSU-Next root
+        #   oneui-noroot  — Samsung OneUI ROMs, no root
+        #   oneui-ksu     — Samsung OneUI ROMs + KernelSU-Next root
+        #   resuki        — ReSuki (embedded SU, no KSU app needed)
+        # The *-ksu variants integrate KernelSU-Next; the oneui variants apply
+        # the oneui.config fragment (Samsung vendor hooks). resuki uses its
+        # own SU implementation baked into the kernel.
+        variant: [aosp-noroot, aosp-ksu, oneui-noroot, oneui-ksu, resuki]
 
     steps:
       - name: Checkout ExynosNext overlay
@@ -207,7 +216,7 @@ jobs:
             ./scripts/config --file out/.config -e KSU
           fi
 
-          # Apply the OneUI fragment for *-oneui variants (after the base
+          # Apply the OneUI fragment for oneui* variants (after the base
           # vendor fragment). It adds Samsung vendor hooks, SELinux develop
           # mode, binderfs, and the hooks OneUI user-space expects.
           if echo "${{ matrix.variant }}" | grep -q oneui; then
@@ -260,103 +269,75 @@ jobs:
             M=vendor/samsung/clock modules 2>&1 || true
           ls -lh vendor/samsung/clock/*.ko 2>/dev/null || echo "clock module: not built (expected — see config comment)"
 
-      - name: Build boot.img
-        working-directory: common
-        continue-on-error: true
+      - name: Build AnyKernel3 flashable zip
         run: |
-          # Create a flashable Android boot image containing the kernel.
-          # GKI boot.img needs a ramdisk; we use a minimal initramfs stub so
-          # the image is structurally valid (fastboot flash boot).  The real
-          # ramdisk comes from the device's vendor_boot at flash time.
-          mkdir -p out/ramdisk
-          echo "ExynosNext GKI stub ramdisk" > out/ramdisk/init
-          chmod 755 out/ramdisk/init
-          (cd out/ramdisk && find . | cpio -o -H newc 2>/dev/null | gzip > ../ramdisk.cpio.gz) || true
+          # ── AnyKernel3 packaging (professional kernel flashable zip) ──
+          # Instead of building a boot.img with a stub ramdisk (wrong!), we
+          # follow the AnyKernel3 approach used by FloppyKernel, KernelSU
+          # official builds, and every serious Android kernel project:
+          #
+          #   The zip contains the raw kernel Image + dtb + AnyKernel3 tools.
+          #   At flash time, AK3 extracts the device's current boot.img,
+          #   replaces only the kernel (Image) and dtb, preserves the device's
+          #   ramdisk/init, and repacks. This is the ONLY correct way to flash
+          #   a GKI kernel — the device's ramdisk is essential.
+          #
+          # The anykernel3/ directory in this repo contains the AK3 template
+          # (tools, META-INF, anykernel.sh). We copy the built kernel + dtb
+          # into it and zip.
 
-          # Install mkbootimg from AOSP (pip package) if not present.
-          if ! command -v mkbootimg >/dev/null 2>&1; then
-            pip3 install --quiet mkbootimg 2>/dev/null || true
-          fi
+          AK3_SRC="$GITHUB_WORKSPACE/exynosnext/anykernel3"
+          AK3_OUT="$GITHUB_WORKSPACE/out/ak3"
+          rm -rf "$AK3_OUT"
+          cp -r "$AK3_SRC" "$AK3_OUT"
 
-          # Try to find mkbootimg in the tree or on PATH.
-          MKBOOTIMG=""
-          for p in tools/mkbootimg/mkbootimg.py system/tools/mkbootimg/mkbootimg.py; do
-            if [ -f "$p" ]; then MKBOOTIMG="python3 $p"; break; fi
-          done
-          if [ -z "$MKBOOTIMG" ]; then
-            MKBOOTIMG=$(command -v mkbootimg 2>/dev/null)
-          fi
+          # Copy the built kernel Image
+          cp -v common/out/arch/arm64/boot/Image "$AK3_OUT/Image"
 
-          if [ -n "$MKBOOTIMG" ]; then
-            $MKBOOTIMG \
-              --kernel out/arch/arm64/boot/Image \
-              --ramdisk out/ramdisk.cpio.gz \
-              --cmdline "androidboot.hardware=exynos1280 loop.max_part=7" \
-              --pagesize 4096 \
-              --base 0x10000000 \
-              --kernel_offset 0x00008000 \
-              --ramdisk_offset 0x01000000 \
-              --output out/arch/arm64/boot/boot.img || \
-              echo "WARNING: mkbootimg failed; shipping raw Image only"
-            if [ -f out/arch/arm64/boot/boot.img ]; then
-              echo "=== boot.img built ==="
-              ls -lh out/arch/arm64/boot/boot.img
-            fi
+          # Copy the primary device DTB (A53 is the reference device).
+          # AK3 expects a single 'dtb' file.
+          A53_DTB=$(find common/out/arch/arm64/boot/dts -name 'exynos1280-a53x.dtb' | head -1)
+          if [ -n "$A53_DTB" ]; then
+            cp -v "$A53_DTB" "$AK3_OUT/dtb"
+            echo "=== Primary DTB (A53) copied ==="
           else
-            echo "WARNING: mkbootimg not found; shipping raw Image only"
+            echo "WARNING: a53x.dtb not found — dtb will be empty"
+            # Fall back to the first available DTB
+            FIRST_DTB=$(find common/out/arch/arm64/boot/dts -name 'exynos1280-*.dtb' | head -1)
+            if [ -n "$FIRST_DTB" ]; then
+              cp -v "$FIRST_DTB" "$AK3_OUT/dtb"
+              echo "=== Fallback DTB: $(basename $FIRST_DTB) ==="
+            fi
           fi
 
-      - name: Package flashable bundle
-        run: |
-          # Package everything into out/dist/ (a flat directory), which
-          # upload-artifact will deliver as a single downloadable archive
-          # (no zip-in-zip).
-          mkdir -p out/dist/dtb out/dist/modules
-          DIST=out/dist
+          # Copy any built kernel modules to modules/system/lib/modules/
+          find common/out -name '*.ko' -exec cp -v {} "$AK3_OUT/modules/system/lib/modules/" \; 2>/dev/null || true
+          # Remove the placeholder if modules were added
+          if [ -n "$(ls "$AK3_OUT/modules/system/lib/modules/"*.ko 2>/dev/null)" ]; then
+            rm -f "$AK3_OUT/modules/system/lib/modules/placeholder"
+          fi
 
-          # Kernel images
-          cp -v common/out/arch/arm64/boot/Image      $DIST/ 2>/dev/null || true
-          cp -v common/out/arch/arm64/boot/Image.gz   $DIST/ 2>/dev/null || true
-          cp -v common/out/arch/arm64/boot/boot.img   $DIST/ 2>/dev/null || true
-          cp -v common/out/arch/arm64/boot/dtbo.img   $DIST/ 2>/dev/null || true
+          # Copy kernel config for reference
+          cp -v common/out/.config "$AK3_OUT/kernel.config" 2>/dev/null || true
 
-          # Device DTBs
-          find common/out/arch/arm64/boot/dts -name 'exynos1280-*.dtb' \
-            -exec cp -v {} $DIST/dtb/ \; 2>/dev/null || true
+          # Update kernel.string in anykernel.sh with the variant name
+          case "${{ matrix.variant }}" in
+            aosp-noroot)   VARIANT_NAME="AOSP NoRoot" ;;
+            aosp-ksu)      VARIANT_NAME="AOSP + KernelSU-Next" ;;
+            oneui-noroot)  VARIANT_NAME="OneUI NoRoot" ;;
+            oneui-ksu)     VARIANT_NAME="OneUI + KernelSU-Next" ;;
+            resuki)        VARIANT_NAME="ReSuki" ;;
+          esac
+          BUILD_DATE=$(date +%Y%m%d-%H%M)
+          sed -i "s|^kernel.string=.*|kernel.string=ExynosNext GKI 6.18 ($VARIANT_NAME) $BUILD_DATE|" "$AK3_OUT/anykernel.sh"
 
-          # Clock module (.ko)
-          find common/vendor/samsung/clock -name '*.ko' \
-            -exec cp -v {} $DIST/modules/ \; 2>/dev/null || true
-          # Also check the build output tree
-          find common/out -name 'clk*s5e8825*.ko' \
-            -exec cp -v {} $DIST/modules/ \; 2>/dev/null || true
-
-          # Kernel config + build info
-          cp -v common/out/.config $DIST/kernel.config 2>/dev/null || true
-          cat > $DIST/README.txt <<'EOF'
-          ExynosNext GKI kernel build
-          ===========================
-          Files:
-            Image        â€” raw kernel image (fastboot boot / fastboot flash boot)
-            Image.gz     â€” gzip-compressed kernel
-            boot.img     â€” Android boot image (fastboot flash boot)
-            dtbo.img     â€” device tree overlay image (fastboot flash dtbo)
-            dtb/*.dtb    â€” individual device tree blobs
-            modules/*.ko â€” loadable kernel modules (install to /vendor/lib/modules)
-            kernel.config â€” the .config used for this build
-
-          Flashing (fastboot):
-            fastboot flash boot boot.img
-            fastboot flash dtbo dtbo.img   # if present
-            fastboot reboot
-
-          NOTE: This is an early bring-up kernel. It builds but does NOT yet
-          boot on the device â€” Samsung vendor modules (clock/PMIC/display) are
-          not fully ported. See docs/STATUS.md.
-          EOF
-
-          echo "=== Final dist contents ==="
-          find $DIST -type f -exec ls -lh {} \;
+          # Create the flashable zip
+          ZIP_NAME="ExynosNext-$(echo '${{ matrix.variant }}' | sed 's/-//g')-${BUILD_DATE}.zip"
+          (cd "$AK3_OUT" && zip -r9 "$GITHUB_WORKSPACE/out/${ZIP_NAME}" . -x '*.git*' 'placeholder')
+          echo "=== AnyKernel3 zip created ==="
+          ls -lh "$GITHUB_WORKSPACE/out/${ZIP_NAME}"
+          echo "ZIP_NAME=${ZIP_NAME}" >> "$GITHUB_ENV"
+          echo "VARIANT_NAME=${VARIANT_NAME}" >> "$GITHUB_ENV"
 
       - name: Upload kernel config
         if: always()
@@ -365,39 +346,31 @@ jobs:
           name: config-${{ matrix.variant }}
           path: |
             common/out/.config
-            out/dist/kernel.config
           if-no-files-found: ignore
           retention-days: 7
 
-      - name: Upload flashable bundle
+      - name: Upload AnyKernel3 zip
         if: success()
         uses: actions/upload-artifact@v7
         with:
-          name: ExynosNext-GKI-${{ matrix.variant }}
-          path: out/dist/
+          name: ExynosNext-${{ matrix.variant }}
+          path: out/*.zip
           retention-days: 14
 
       - name: Release (on tag)
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
-          # Zip the dist for the GitHub release (not for artifacts).
-          VERSION=$(date +%Y%m%d-%H%M)
-          case "${{ matrix.variant }}" in
-            ksu-oneui)     SUFFIX="KSU-OneUI" ;;
-            vanilla-oneui) SUFFIX="Vanilla-OneUI" ;;
-            ksu)           SUFFIX="KSU" ;;
-            vanilla)       SUFFIX="Vanilla" ;;
-          esac
-          ZIP="ExynosNext-GKI-${SUFFIX}-${VERSION}.zip"
-          (cd out/dist && zip -r9 "../../${ZIP}" . -x '*.git*')
-          echo "Created ${ZIP}"
-
-          # Create/update the GitHub release with this variant's zip.
           TAG="${GITHUB_REF#refs/tags/}"
-          gh release create "$TAG" "$ZIP" \
-            --title "$TAG" \
-            --notes "ExynosNext GKI build $TAG ($SUFFIX variant)" \
+          gh release create "$TAG" "out/${ZIP_NAME}" \
+            --title "$TAG ($VARIANT_NAME)" \
+            --notes "ExynosNext GKI build $TAG
+
+          Variant: $VARIANT_NAME
+          Date: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          Flashing: flash via TWRP/recovery (AnyKernel3 zip). Do NOT use
+          fastboot flash boot — the zip preserves your device's ramdisk." \
             --prerelease 2>/dev/null || \
-          gh release upload "$TAG" "$ZIP" --clobber
+          gh release upload "$TAG" "out/${ZIP_NAME}" --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
