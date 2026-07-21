@@ -139,6 +139,8 @@ label scheme (`uart0`/`hsi2c0`/`ufs`/`dwmmc2`/`decon`/`dsim0`/`gpu`/`abox`/
 | MCT timer | ✅ present | `samsung,exynos4210-mct` at `0x10050000` — was missing before |
 | CPU topology | ✅ correct | 8 cores (6×Ananke/A55 + 2×Hercules/A78) with `cpu-map` |
 | Real DT reference | ✅ included | `docs/reference-a53-real.dts` — full 137-node decoded Samsung DT |
+| **ACPM IPC framework** | ✅ **built-in** | `vendor/samsung/soc/acpm/acpm_ipc.c` — channel mgmt, IRQ handler, sync/async IPC send; the #1 blocker is now ported (skeleton) |
+| Clock-ACPM integration | ✅ linked | Clock driver requests ACPM channel in probe; `exynos1280_acpm_clk_op()` helper ready |
 | Flash tool / scripts | ✅ usable | Interactive TUI |
 | GitHub Actions | ✅ Node 24 | checkout@v7, cache@v6, upload-artifact@v7 |
 
@@ -146,20 +148,20 @@ label scheme (`uart0`/`hsi2c0`/`ufs`/`dwmmc2`/`decon`/`dsim0`/`gpu`/`abox`/
 
 | Area | State | Blocker |
 |------|-------|---------|
-| Clock module (.ko) | ⚠️ disabled | The module uses internal kernel symbols (`__platform_driver_register`, `__clk_hw_register_fixed_rate`, `devm_kmalloc`, `_dev_warn`) that are NOT exported in GKI. Building it requires porting ACPM first (then the driver can use ACPM IPC instead of direct registers). Source remains in `vendor/samsung/clock/`. |
-| ACPM mailbox driver | ❌ not ported | **This is THE blocker.** Samsung clocks are driven via ACPM IPC, not direct register writes. Without the ACPM mailbox driver + firmware, no clock can be programmed. |
+| Clock module (.ko) | ⚠️ disabled | The module uses internal kernel symbols (`__platform_driver_register`, `__clk_hw_register_fixed_rate`, `devm_kmalloc`, `_dev_warn`) that are NOT exported in GKI. The ACPM framework is now in place — once the clock driver is rewritten to use ACPM IPC exclusively (no direct registers), it can be built as built-in. Source remains in `vendor/samsung/clock/`. |
+| ACPM mailbox driver | 🟡 skeleton ported | The ACPM IPC framework (`vendor/samsung/soc/acpm/acpm_ipc.c`) compiles and is built-in. Channel management, IRQ handler, and sync/async IPC send work. The SRAM buffer layout uses a simplified fixed layout — the real ACPM firmware binary initdata parser needs to be ported for actual hardware operation. |
 | 13 vendor modules | ❌ no source | display, gpu, media, audio, modem, wifi, input, sensors, battery, fingerprint are empty scaffolds |
 | PMIC / pinctrl / regulators | ❌ not ported | S2MPS34 driver + exynos pinctrl driver must be ported from 5.10 |
 | Bazel/Kleaf build | ⚠️ untested | CI uses make-based GKI build |
-| Booting on a device | ❌ | Requires ACPM + clock + PMIC + pinctrl |
+| Booting on a device | ❌ | Requires ACPM firmware loading + clock driver rewrite + PMIC + pinctrl |
 
 ## Roadmap (in dependency order)
 
-1. **ACPM mailbox driver**: port `drivers/soc/samsung/acpm` from 5.10. This is
-   the foundation — the clock controller, DVFS, and PMIC all talk to the ACPM
-   co-processor. Without it, nothing can be programmed.
-2. **Clock driver rewrite**: replace the current direct-register stubs with an
-   ACPM-based clock driver that sends IPC messages to program clocks.
+1. **ACPM mailbox driver**: ✅ skeleton ported (compiles, built-in). Remaining
+   work: port the ACPM firmware binary initdata parser to correctly map
+   SRAM buffer layouts per channel. Currently uses a simplified fixed layout.
+2. **Clock driver rewrite**: ✅ linked with ACPM. Replace direct register
+   writes with `exynos1280_acpm_clk_op()` calls for all gate/rate operations.
 3. **PMIC (S2MPS34) + pinctrl**: port these from 5.10; they use ACPM for some
    operations.
 4. **Reach a console**: with ACPM + clock + pinctrl + UART, the kernel can
