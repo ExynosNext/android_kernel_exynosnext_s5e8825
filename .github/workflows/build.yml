@@ -249,12 +249,16 @@ jobs:
             ls -lh out/arch/arm64/boot/dtbo.img
           fi
 
-      - name: Build clock module
+      - name: Build clock module (non-fatal)
         working-directory: common
+        continue-on-error: true
         run: |
+          # The clock module is disabled in the config for now (see
+          # vendor_exynosnext.config for why). This step is kept for when
+          # the ACPM port lands and the module can be re-enabled.
           make O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 -j"$(nproc --all)" \
-            M=vendor/samsung/clock modules
-          ls -lh vendor/samsung/clock/*.ko 2>/dev/null || echo "clock module build note: see log"
+            M=vendor/samsung/clock modules 2>&1 || true
+          ls -lh vendor/samsung/clock/*.ko 2>/dev/null || echo "clock module: not built (expected — see config comment)"
 
       - name: Build boot.img
         working-directory: common
