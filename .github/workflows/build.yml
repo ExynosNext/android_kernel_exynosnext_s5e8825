@@ -55,6 +55,10 @@ env:
   CCACHE_DIR: ${{ github.workspace }}/.ccache
   CCACHE_MAXSIZE: 50G
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   build:
     name: ${{ matrix.android_version }} (${{ matrix.variant }})
@@ -392,18 +396,24 @@ jobs:
 
       - name: Release (on tag)
         if: startsWith(github.ref, 'refs/tags/v')
+        continue-on-error: true
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
-          gh release create "$TAG" "out/${ZIP_NAME}" \
-            --title "$TAG ($VARIANT_NAME)" \
-            --notes "ExynosNext GKI build $TAG
+          # Try to create the release; if it exists, upload to it.
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" "out/${ZIP_NAME}" \
+              --title "$TAG ($VARIANT_NAME)" \
+              --notes "ExynosNext GKI build $TAG
 
           Variant: $VARIANT_NAME
           Date: $(date -u +%Y-%m-%dT%H:%M:%SZ)
 
           Flashing: flash via TWRP/recovery (AnyKernel3 zip). Do NOT use
           fastboot flash boot — the zip preserves your device's ramdisk." \
-            --prerelease 2>/dev/null || \
-          gh release upload "$TAG" "out/${ZIP_NAME}" --clobber
+              --prerelease || \
+            echo "release create failed, trying upload instead"
+          fi
+          gh release upload "$TAG" "out/${ZIP_NAME}" --clobber || \
+            echo "WARNING: release upload failed for $TAG"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
