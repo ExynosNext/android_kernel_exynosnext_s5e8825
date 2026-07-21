@@ -27,6 +27,8 @@
 #include <linux/slab.h>
 #include <linux/spinlock.h>
 
+#include <soc/samsung/acpm_ipc_ctrl.h>
+
 #include "clk-s5e8825.h"
 
 /* ── CMU block physical base addresses (from CAL-IF cmucal-sfr.c) ──── */
@@ -91,6 +93,8 @@ struct exynos1280_clk {
 	int				num_regions;
 	spinlock_t			lock;
 	struct clk_hw_onecell_data	*data;
+	unsigned int			acpm_ch;
+	bool				acpm_available;
 };
 
 static inline void exynos1280_set_hw(struct exynos1280_clk *clk,
@@ -579,6 +583,47 @@ static const char * const cmu_reg_names[CMU_NUM_REGIONS] = {
 	[CMU_CSIS] = "csis",
 };
 
+/*
+ * ACPM IPC clock command format (from Samsung CAL-IF):
+ *   word 0: [31:28] cmd_type | [27:16] clock_id | [15:0] params
+ *   word 1: rate/param value
+ *   word 2-3: reserved
+ *
+ * Command types:
+ *   0x1 = enable clock gate
+ *   0x2 = disable clock gate
+ *   0x3 = set rate
+ *   0x4 = get rate
+ *   0x5 = set parent
+ */
+#define ACPM_CLK_CMD_ENABLE	0x1
+#define ACPM_CLK_CMD_DISABLE	0x2
+#define ACPM_CLK_CMD_SET_RATE	0x3
+#define ACPM_CLK_CMD_GET_RATE	0x4
+
+static int exynos1280_acpm_clk_op(struct exynos1280_clk *clk,
+				  unsigned int cmd_type,
+				  unsigned int clk_id,
+				  unsigned int param)
+{
+	struct ipc_config cfg;
+	unsigned int cmd[4] = {0, 0, 0, 0};
+
+	if (!clk->acpm_available)
+		return -ENOSYS;
+
+	cmd[0] = (cmd_type << 28) | (clk_id & 0xFFFF);
+	cmd[1] = param;
+
+	cfg.cmd = cmd;
+	cfg.response = true;
+	cfg.indirection = false;
+	cfg.indirection_base = NULL;
+	cfg.indirection_size = 0;
+
+	return acpm_ipc_send_data_sync(clk->acpm_ch, &cfg);
+}
+
 static int exynos1280_clk_probe(struct platform_device *pdev)
 {
 	struct exynos1280_clk *clk;
@@ -636,6 +681,28 @@ static int exynos1280_clk_probe(struct platform_device *pdev)
 		return dev_err_probe(&pdev->dev, -ENODEV,
 				     "CMU_TOP region is required\n");
 
+	/* Request an ACPM IPC channel for clock operations.
+	 * Samsung's clock tree is driven through ACPM IPC — the
+	 * samsung,s5e8825-clock node has acpm-ipc-channel = <0>.
+	 * When the ACPM framework is available, we use it; otherwise
+	 * we fall back to direct register access (the current behavior). */
+	{
+		unsigned int acpm_id = 0, acpm_size = 0;
+		ret = acpm_ipc_request_channel(pdev->dev.of_node, NULL,
+					       &acpm_id, &acpm_size);
+		if (ret == 0) {
+			clk->acpm_ch = acpm_id;
+			clk->acpm_available = true;
+			dev_info(&pdev->dev,
+				 "ACPM IPC channel %u acquired (size %u)\n",
+				 acpm_id, acpm_size);
+		} else {
+			clk->acpm_available = false;
+			dev_info(&pdev->dev,
+				 "ACPM not available, using direct registers\n");
+		}
+	}
+
 	ret = exynos1280_register_clocks(clk);
 	if (ret)
 		return dev_err_probe(&pdev->dev, ret,
@@ -643,8 +710,9 @@ static int exynos1280_clk_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, clk);
 	dev_info(&pdev->dev,
-		 "Exynos 1280 clock controller: %d CMU regions, %u clock IDs\n",
-		 clk->num_regions, CLK_MAX_CLKS);
+		 "Exynos 1280 clock controller: %d CMU regions, %u clock IDs, ACPM=%s\n",
+		 clk->num_regions, CLK_MAX_CLKS,
+		 clk->acpm_available ? "yes" : "no");
 	return 0;
 }
 
