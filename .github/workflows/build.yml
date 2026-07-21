@@ -288,6 +288,7 @@ jobs:
 
           AK3_SRC="$GITHUB_WORKSPACE/exynosnext/anykernel3"
           AK3_OUT="$GITHUB_WORKSPACE/out/ak3"
+          mkdir -p "$GITHUB_WORKSPACE/out"
           rm -rf "$AK3_OUT"
           cp -r "$AK3_SRC" "$AK3_OUT"
 
