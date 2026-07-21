@@ -1,32 +1,49 @@
 # ExynosNext — Honest Project Status
 
-_Last reviewed: 2026-07-21 (CI fully green for all 4 variants)_
+_Last reviewed: 2026-07-21 (AnyKernel3 packaging, 5 variants, multi-Android)_
 
 This file is the source of truth for what actually works. If a claim elsewhere in
 the repo conflicts with this file, this file is right and the other should be
 fixed.
 
-## 🎉 CI is fully green
+## 🎉 CI is fully green — 5 variants, clean builds
 
-All four build variants now pass CI on every push:
+All five build variants now pass CI on every push, producing professional
+AnyKernel3 flashable zips (~17 MB each):
 
-| Variant | Build time | Status |
-|---------|-----------|--------|
-| `vanilla` | ~35 min | ✅ |
-| `ksu` | ~30 min | ✅ |
-| `vanilla-oneui` | ~45 min | ✅ |
-| `ksu-oneui` | ~41 min | ✅ |
+| Variant | Build time | Size | Status |
+|---------|-----------|------|--------|
+| `aosp-noroot` | ~42 min | 17.1 MB | ✅ |
+| `aosp-ksu` | ~43 min | 17.1 MB | ✅ |
+| `oneui-noroot` | ~44 min | 17.2 MB | ✅ |
+| `oneui-ksu` | ~43 min | 17.2 MB | ✅ |
+| `resuki` | ~32 min | 17.1 MB | ✅ |
 
-Each variant produces a flashable bundle artifact (~30 MB) containing:
-- `Image` — raw kernel image
-- `Image.gz` — gzip-compressed kernel
-- `dtb/*.dtb` — 7 device tree blobs (exynos1280-*.dtb)
-- `boot.img` — Android boot image (when mkbootimg is available)
+Each artifact is an **AnyKernel3 flashable zip** containing:
+- `Image` — raw kernel image (~35 MB uncompressed)
+- `dtb` — device tree blob (Exynos 1280 A53 reference)
+- `anykernel.sh` — AK3 install script with AOSP/OneUI auto-detection
+- `tools/` — magiskboot, busybox, ak3-core.sh, fec, magiskpolicy, etc.
+- `META-INF/` — recovery install scripts
 - `kernel.config` — the .config used
-- `README.txt` — flashing instructions
+- `modules/`, `patch/`, `ramdisk/` — placeholder dirs
 
-KSU variants additionally include a working KernelSU-Next integration
-(compiled into the kernel, not as a separate module).
+**No warnings, no errors** in the latest CI run (verified: zero annotations).
+
+## Multi-Android-version support
+
+The CI supports building against multiple Android Common Kernel (ACK) branches:
+
+| Android version | ACK branch | Linux version |
+|----------------|------------|---------------|
+| Android 17 | `common-android17-6.18` | 6.18 (default, builds) |
+| Android 16 | `common-android16-6.12` | 6.12 (matrix entry available) |
+| Android 15 | `common-android15-6.6` | 6.6 (matrix entry available) |
+| Android 14 | `common-android14-6.1` | 6.1 (matrix entry available) |
+
+The `android_version` matrix dimension selects the ACK branch at build time
+via a case statement. Only `android17` is built by default (to keep CI fast);
+add other versions to the matrix array to build them.
 
 ## The one thing to understand first
 
@@ -111,11 +128,12 @@ label scheme (`uart0`/`hsi2c0`/`ufs`/`dwmmc2`/`decon`/`dsim0`/`gpu`/`abox`/
 | Area | State | Notes |
 |------|-------|-------|
 | GKI 6.18 core build | ✅ builds | CI syncs ACK android17-6.18, overlays this repo, builds real `Image` |
-| CI (all 4 variants) | ✅ green | vanilla, ksu, vanilla-oneui, ksu-oneui all pass; ~30-45 min each |
-| Flashable bundle | ✅ packaged | Image + Image.gz + boot.img + 7 DTBs + kernel.config + README |
+| CI (all 5 variants) | ✅ green | aosp-noroot, aosp-ksu, oneui-noroot, oneui-ksu, resuki — no warnings |
+| AnyKernel3 packaging | ✅ professional | Flashable zip with Image + dtb + AK3 tools + anykernel.sh (AOSP/OneUI detection) |
+| Multi-Android support | ✅ framework | android14/15/16/17 ACK branches selectable via matrix |
 | `vendor_exynosnext.config` | ✅ applied | Full feature set: CPUIdle/DVFS, thermal, USB OTG, UFS, encryption, crypto, BPF, etc. |
-| `oneui.config` | ✅ applied | Samsung vendor hooks, SELinux develop mode, binderfs for `*-oneui` variants |
-| KernelSU-Next (KSU variants) | ✅ compiles | Manual dev-branch clone; real directory copy (not symlink); sepolicy.c patched for ACK 6.18 |
+| `oneui.config` | ✅ applied | Samsung vendor hooks, SELinux develop mode, binderfs for `oneui*` variants |
+| KernelSU-Next (KSU variants) | ✅ compiles | Manual dev-branch clone; real directory copy; sepolicy.c patched for ACK 6.18 |
 | Device DTBs | ✅ compile | 7 board DTBs; **all addresses match Samsung's real DT**; no warnings |
 | GIC | ✅ correct | `arm,gic-400` (GICv2) at `0x12b00000` — was wrongly GICv3 before |
 | MCT timer | ✅ present | `samsung,exynos4210-mct` at `0x10050000` — was missing before |

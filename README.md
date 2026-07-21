@@ -63,22 +63,44 @@ bring-up target; the others reuse the common `exynos1280.dtsi`.
 
 ## Build Variants
 
-The CI pipeline produces **four variants** via a build matrix:
+The CI pipeline produces **five variants** via a build matrix, each as a
+professional AnyKernel3 flashable zip:
 
 | Variant | Root | OneUI | Description |
 |---------|------|-------|-------------|
-| `vanilla` | ❌ | ❌ | Clean GKI kernel, no root, no OneUI hooks |
-| `ksu` | ✅ | ❌ | GKI kernel + KernelSU-Next root |
-| `vanilla-oneui` | ❌ | ✅ | GKI kernel + OneUI config fragment (Samsung vendor hooks, SELinux develop mode, binderfs, devfreq governors) |
-| `ksu-oneui` | ✅ | ✅ | GKI kernel + KernelSU-Next + OneUI config fragment |
+| `aosp-noroot` | ❌ | ❌ | Clean GKI kernel for AOSP ROMs, no root |
+| `aosp-ksu` | ✅ | ❌ | GKI kernel + KernelSU-Next root for AOSP ROMs |
+| `oneui-noroot` | ❌ | ✅ | GKI kernel + OneUI config fragment for Samsung OneUI ROMs |
+| `oneui-ksu` | ✅ | ✅ | GKI kernel + KernelSU-Next + OneUI config fragment |
+| `resuki` | ✅ | ❌ | ReSuki (embedded SU, no KSU app needed) |
 
-- **KernelSU-Next** is integrated by cloning the `dev` branch of
-  [KernelSU-Next/KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next)
-  and copying its `kernel/` directory into `drivers/kernelsu/`.
-- The **OneUI fragment** (`oneui.config`) is applied on top of
-  `vendor_exynosnext.config` for `*-oneui` variants. It enables Samsung vendor
-  hooks, SELinux develop mode, binderfs, LED/vibrator support, and Samsung sysfs
-  stubs that OneUI user-space expects from the kernel.
+### AnyKernel3 packaging
+
+Each variant is packaged as an **AnyKernel3 flashable zip** — the professional
+approach used by FloppyKernel, KernelSU official builds, and every serious
+Android kernel project. The zip contains:
+
+- `Image` — the built kernel
+- `dtb` — device tree blob
+- `anykernel.sh` — AK3 install script with automatic AOSP/OneUI detection
+- `tools/` — magiskboot, busybox, ak3-core.sh, and other AK3 tools
+- `META-INF/` — recovery install scripts
+
+At flash time, AnyKernel3 extracts the device's current boot.img, replaces
+only the kernel (Image) and dtb, preserves the device's ramdisk/init, and
+repacks. This is the **only correct way** to flash a GKI kernel — the device's
+ramdisk is essential and cannot be replaced with a stub.
+
+### Multi-Android-version support
+
+The CI framework supports building against multiple ACK branches:
+
+| Android | ACK branch | Linux |
+|---------|-----------|-------|
+| 17 | `common-android17-6.18` | 6.18 (default) |
+| 16 | `common-android16-6.12` | 6.12 |
+| 15 | `common-android15-6.6` | 6.6 |
+| 14 | `common-android14-6.1` | 6.1 |
 
 ---
 
