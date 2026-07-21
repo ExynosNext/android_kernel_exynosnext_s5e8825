@@ -29,30 +29,48 @@ on:
   workflow_dispatch:
     inputs:
       variant:
-        description: 'Build variant'
+        description: 'Build variant (or "all")'
         required: false
         default: 'all'
         type: choice
         options:
           - all
-          - ksu
-          - vanilla
+          - aosp-noroot
+          - aosp-ksu
+          - oneui-noroot
+          - oneui-ksu
+          - resuki
+      android_version:
+        description: 'Android/KMI version'
+        required: false
+        default: 'android17'
+        type: choice
+        options:
+          - android17
+          - android16
+          - android15
+          - android14
 
 env:
   CCACHE_DIR: ${{ github.workspace }}/.ccache
   CCACHE_MAXSIZE: 50G
-  GKI_BRANCH: common-android17-6.18
 
 jobs:
   build:
-    name: GKI 6.18 baseline (${{ matrix.variant }})
+    name: ${{ matrix.android_version }} (${{ matrix.variant }})
     runs-on: ubuntu-latest
     timeout-minutes: 120
 
     strategy:
       fail-fast: false
       matrix:
-        # Build matrix covers every ROM + root combination a user might need:
+        # Android/KMI version dimension:
+        #   android17 → common-android17-6.18 (Linux 6.18, newest)
+        #   android16 → common-android16-6.12 (Linux 6.12)
+        #   android15 → common-android15-6.6  (Linux 6.6)
+        #   android14 → common-android14-6.1  (Linux 6.1)
+        android_version: [android17]
+        # Build variant dimension covers every ROM + root combination:
         #   aosp-noroot   — AOSP ROMs, no root (pure GKI)
         #   aosp-ksu      — AOSP ROMs + KernelSU-Next root
         #   oneui-noroot  — Samsung OneUI ROMs, no root
@@ -93,8 +111,21 @@ jobs:
           chmod a+x ~/bin/repo
           echo "$HOME/bin" >> $GITHUB_PATH
 
-      - name: Sync GKI source (${{ env.GKI_BRANCH }})
+      - name: Sync GKI source (common-${{ matrix.android_version }})
         run: |
+          # Map Android version to ACK branch:
+          #   android17 → common-android17-6.18 (Linux 6.18)
+          #   android16 → common-android16-6.12 (Linux 6.12)
+          #   android15 → common-android15-6.6  (Linux 6.6)
+          #   android14 → common-android14-6.1  (Linux 6.1)
+          case "${{ matrix.android_version }}" in
+            android17) GKI_BRANCH="common-android17-6.18" ;;
+            android16) GKI_BRANCH="common-android16-6.12" ;;
+            android15) GKI_BRANCH="common-android15-6.6" ;;
+            android14) GKI_BRANCH="common-android14-6.1" ;;
+            *) echo "Unknown android_version: ${{ matrix.android_version }}"; exit 1 ;;
+          esac
+          echo "GKI_BRANCH=${GKI_BRANCH}" >> "$GITHUB_ENV"
           repo init -u https://android.googlesource.com/kernel/manifest \
             -b "$GKI_BRANCH" --depth=1
           repo sync -j"$(nproc --all)" --no-tags
@@ -333,7 +364,7 @@ jobs:
           sed -i "s|^kernel.string=.*|kernel.string=ExynosNext GKI 6.18 ($VARIANT_NAME) $BUILD_DATE|" "$AK3_OUT/anykernel.sh"
 
           # Create the flashable zip
-          ZIP_NAME="ExynosNext-$(echo '${{ matrix.variant }}' | sed 's/-//g')-${BUILD_DATE}.zip"
+          ZIP_NAME="ExynosNext-${{ matrix.android_version }}-$(echo '${{ matrix.variant }}' | sed 's/-//g')-${BUILD_DATE}.zip"
           (cd "$AK3_OUT" && zip -r9 "$GITHUB_WORKSPACE/out/${ZIP_NAME}" . -x '*.git*' 'placeholder')
           echo "=== AnyKernel3 zip created ==="
           ls -lh "$GITHUB_WORKSPACE/out/${ZIP_NAME}"
@@ -354,8 +385,9 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v7
         with:
-          name: ExynosNext-${{ matrix.variant }}
+          name: ExynosNext-${{ matrix.android_version }}-${{ matrix.variant }}
           path: out/*.zip
+          if-no-files-found: error
           retention-days: 14
 
       - name: Release (on tag)
