@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: GPL-2.0
+
+config RTC_DRV_EXYNOS1280
+	tristate "Samsung Exynos 1280 RTC driver"
+	depends on OF
+	select RTC_CLASS
+	default y
+	help
+	  RTC driver for Samsung Exynos 1280 (s5e8825).
+	  Uses the standard Linux RTC subsystem.

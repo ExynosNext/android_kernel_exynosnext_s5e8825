@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: GPL-2.0
+
+config EXYNOS1280_WDT
+	tristate "Samsung Exynos 1280 watchdog driver"
+	depends on OF
+	select WATCHDOG_CORE
+	default y
+	help
+	  Watchdog timer driver for Samsung Exynos 1280 (s5e8825).
+	  Uses the standard Linux watchdog subsystem.

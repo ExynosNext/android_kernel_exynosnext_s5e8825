@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: GPL-2.0
+
+config EXYNOS1280_TMU
+	tristate "Samsung Exynos 1280 TMU thermal driver"
+	depends on OF
+	depends on THERMAL
+	default y
+	help
+	  Thermal Management Unit driver for Samsung Exynos 1280 (s5e8825).
+	  Uses the standard Linux thermal subsystem. Monitors CPU clusters,
+	  GPU, and ISP temperatures.
