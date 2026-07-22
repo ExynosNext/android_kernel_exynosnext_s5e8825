@@ -45,6 +45,23 @@ The `android_version` matrix dimension selects the ACK branch at build time
 via a case statement. Only `android17` is built by default (to keep CI fast);
 add other versions to the matrix array to build them.
 
+## Mainline-compatible driver architecture
+
+The project is transitioning from Samsung's internal CAL-IF framework to
+**standard mainline Linux subsystems**, making the drivers updatable with
+each new kernel version without Samsung-specific dependencies:
+
+| Driver | Framework used | Mainline-compatible | Files |
+|--------|---------------|-------------------|-------|
+| ACPM IPC | Custom (from 5.10) | 🟡 Skeleton | `vendor/samsung/soc/acpm/` |
+| Pinctrl | `pinctrl_desc` + `pinmux_ops` + `pinconf_ops` + `gpio_chip` | ✅ Yes | `vendor/samsung/pinctrl/` |
+| Clock | `clk_hw_register_*` (clk-provider) | ✅ Yes | `vendor/samsung/clock/` |
+| PMIC MFD | `devm_mfd_add_devices` + `regmap_init_i2c` | ✅ Yes | `vendor/samsung/mfd/` |
+| Regulator | `regulator_desc` + `regulator_config` + regmap ops | ✅ Yes | `vendor/samsung/regulator/` |
+
+All drivers use **only exported APIs** (no Samsung-internal symbols), making
+them GKI-compatible and portable to future kernel versions (6.x → 7.x).
+
 ## The one thing to understand first
 
 Every **working** kernel for the Samsung Exynos 1280 (s5e8825) — Samsung's own
