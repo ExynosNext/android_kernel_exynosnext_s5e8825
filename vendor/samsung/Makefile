@@ -1,5 +1,7 @@
 obj-$(CONFIG_EXYNOS_ACPM)		+= soc/acpm/
 obj-$(CONFIG_PINCTRL_S5E8825)		+= pinctrl/
+obj-$(CONFIG_MFD_S2MPS34)		+= mfd/
+obj-$(CONFIG_REGULATOR_S2MPS34)	+= regulator/
 obj-$(CONFIG_COMMON_CLK_S5E8825)	+= clock/
 obj-$(CONFIG_DRM_SAMSUNG_DPU)		+= display/
 obj-$(CONFIG_DRM_SAMSUNG_DSI)		+= display/

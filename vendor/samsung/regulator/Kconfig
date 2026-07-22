@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: GPL-2.0
+
+config REGULATOR_S2MPS34
+	tristate "Samsung S2MPS34 regulator support"
+	depends on MFD_S2MPS34
+	select REGULATOR
+	default y
+	help
+	  This enables the regulator driver for the Samsung S2MPS34 PMIC.
+	  Provides 39 LDOs and 9 BUCK regulators via the standard Linux
+	  regulator subsystem, using the regmap-based regulator framework.

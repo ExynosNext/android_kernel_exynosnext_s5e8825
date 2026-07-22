@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: GPL-2.0
+
+config MFD_S2MPS34
+	tristate "Samsung S2MPS34 PMIC core driver"
+	depends on I2C
+	depends on OF
+	select REGMAP_I2C
+	select MFD_CORE
+	default y
+	help
+	  This enables the Samsung S2MPS34 PMIC core driver. The S2MPS34
+	  is the PMIC for the Samsung Exynos 1280 (s5e8825) SoC, providing
+	  39 LDOs, 9 BUCK regulators, RTC, and watchdog.
+
+	  The PMIC is accessed via I2C through the ACPM MFD bus
+	  (an I2C-over-ACPM-IPC tunnel) or a direct I2C bus.
+
+	  Must be enabled for the S2MPS34 regulator and RTC drivers.

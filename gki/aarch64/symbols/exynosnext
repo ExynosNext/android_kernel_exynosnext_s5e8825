@@ -248,3 +248,18 @@ pinctrl_utils_free_map
 pinconf_to_config_param
 pinconf_to_config_argument
 pinconf_to_config_packed
+
+# ── MFD / Regulator ──────────────────────────────────────────────────
+devm_mfd_add_devices
+devm_regmap_init_i2c
+regmap_read
+regmap_write
+regmap_update_bits
+devm_regulator_register
+regulator_list_voltage_linear
+regulator_map_voltage_linear
+regulator_is_enabled_regmap
+regulator_enable_regmap
+regulator_disable_regmap
+regulator_get_voltage_sel_regmap
+regulator_set_voltage_sel_regmap

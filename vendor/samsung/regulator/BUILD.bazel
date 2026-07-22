@@ -1,0 +1,8 @@
+load("//build/kernel/kleaf:kernel.bzl", "kernel_module")
+
+kernel_module(
+    name = "s2mps34_regulator",
+    srcs = glob(["*.c"]),
+    kernel_build = "//common:kernel_aarch64",
+    visibility = ["//visibility:public"],
+)
